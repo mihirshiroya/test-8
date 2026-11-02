@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { useAuth, useActiveSessions } from '../hooks/useAuth';
-import { Card } from '../components/Ui/Card';
-import { Button } from '../components/Ui/Button';
+import { Card } from '../components/Ui/card';
+import { Button } from '../components/Ui/button';
 
 const Dashboard: React.FC = () => {
   const { user, resendVerification, revokeSession } = useAuth();

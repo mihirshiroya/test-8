@@ -7,7 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:desktop-web": "vite build --mode desktop",
+    "build:backend": "node scripts/build-backend.mjs",
+    "desktop:prepare": "npm run build:desktop-web && npm run build:backend",
+    "desktop:icons": "tauri icon src/assets/logo.png -o src-tauri/icons",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -38,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@tauri-apps/cli": "^2.12.4",
     "@types/react": "^19.1.13",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^19.1.9",

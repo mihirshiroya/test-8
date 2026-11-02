@@ -2,9 +2,9 @@ import React from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { useAuth, useActiveSessions } from '../hooks/useAuth';
-import { Button } from '../components/Ui/Button';
-import { Input } from '../components/Ui/Input';
-import { Card } from '../components/Ui/Card';
+import { Button } from '../components/Ui/button';
+import { Input } from '../components/Ui/input';
+import { Card } from '../components/Ui/card';
 
 const changePasswordSchema = Yup.object().shape({
   currentPassword: Yup.string().required('Current password is required'),

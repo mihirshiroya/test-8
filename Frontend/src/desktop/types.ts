@@ -60,6 +60,21 @@ export interface SavePreferencesResult {
   shortcutIssues: ShortcutIssue[]
 }
 
+export interface AppInfo {
+  version: string
+  name: string
+  logDir: string | null
+  configDir: string | null
+}
+
+/** Pushed to the Rust tray (see Frontend/src-tauri/src/tray.rs). */
+export interface TrayStatus {
+  label: string
+  tooltip: string
+  running: boolean
+  hasTask: boolean
+}
+
 export interface UpdateInfo {
   version: string
   currentVersion: string

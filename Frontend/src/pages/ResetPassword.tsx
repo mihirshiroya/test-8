@@ -4,8 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { toast } from '../lib/toast';
-import { Button } from '../components/Ui/Button';
-import { Input } from '../components/Ui/Input';
+import { Button } from '../components/Ui/button';
+import { Input } from '../components/Ui/input';
 import AuthLayout, {
   authLinkClass,
   authPrimaryButton,

@@ -27,7 +27,11 @@ type cookieOptions struct {
 	sameSite http.SameSite
 }
 
-func (s *Server) defaultCookies() cookieOptions { return cookieOptions{secure: s.cfg.IsProduction()} }
+// The desktop backend is plain HTTP on 127.0.0.1, where Secure cookies are
+// not reliably stored by every webview engine.
+func (s *Server) defaultCookies() cookieOptions {
+	return cookieOptions{secure: s.cfg.IsProduction() && !s.cfg.Desktop}
+}
 
 func setCookie(w http.ResponseWriter, name, value string, maxAge time.Duration, o cookieOptions) {
 	http.SetCookie(w, &http.Cookie{

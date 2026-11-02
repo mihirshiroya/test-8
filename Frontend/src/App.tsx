@@ -67,6 +67,11 @@ import {
 import DocsViewer from './pages/docs-viewer';
 import DocsWorkspace from './pages/docs-workspace';
 
+import { IS_DESKTOP } from './lib/api-origin';
+import { DesktopGate } from './desktop/DesktopGate';
+import { DesktopBridge } from './desktop/DesktopBridge';
+import DesktopSettings from './desktop/DesktopSettings';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -142,6 +147,8 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <div className="App min-h-screen w-full">
+
+        <DesktopBridge />
 
         {/* =====================================================
             FIXED TOP-CENTER NOTCH NAVBAR
@@ -231,6 +238,13 @@ const AppContent: React.FC = () => {
               path="/profile"
               element={<Profile2 />}
             />
+
+            {IS_DESKTOP && (
+              <Route
+                path="/settings/desktop"
+                element={<DesktopSettings />}
+              />
+            )}
 
           </Route>
 
@@ -379,10 +393,12 @@ const App: React.FC = () => {
 
             <ThemeProvider>
 
-              <ActivityDialog />
-              <TaskTimerEngine />
+              <DesktopGate>
+                <ActivityDialog />
+                <TaskTimerEngine />
 
-              <AppContent />
+                <AppContent />
+              </DesktopGate>
 
               <ThemedToaster />
 

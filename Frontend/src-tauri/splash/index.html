@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notch Buddy</title>
+    <link rel="stylesheet" href="splash.css" />
+  </head>
+  <body>
+    <main class="splash">
+      <img src="logo.png" alt="" class="logo" width="56" height="56" />
+      <p id="message" class="message" role="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="message-text">Starting your workspace</span>
+      </p>
+      <p id="detail" class="detail" hidden></p>
+      <button id="retry" type="button" class="retry" hidden>Retry</button>
+    </main>
+    <script src="splash.js"></script>
+  </body>
+</html>

@@ -21,9 +21,11 @@ import {
   Settings,
   Trash2,
   X,
-  LogOut
+  LogOut,
+  MonitorCog
 } from 'lucide-react'
 import { cn } from '../lib/utills'
+import { IS_DESKTOP } from '../lib/api-origin'
 import ThemeSwitcher from './ThemeSwitcher'
 import { DottedText } from '../components/Ui/dotted-text'
 import noResultsRaw from '../assets/31-no-results.svg?raw'
@@ -86,6 +88,7 @@ const outletItems = [
   { label: 'Calender', path: '/Calender', icon: CalendarDays },
   { label: 'Session', path: '/session', icon: Grid2X2 },
   { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
+  ...(IS_DESKTOP ? [{ label: 'Desktop', path: '/settings/desktop', icon: MonitorCog }] : []),
 ]
 
 /**
