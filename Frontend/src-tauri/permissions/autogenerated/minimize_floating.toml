@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-minimize-floating"
+description = "Enables the minimize_floating command without any pre-configured scope."
+commands.allow = ["minimize_floating"]
+
+[[permission]]
+identifier = "deny-minimize-floating"
+description = "Denies the minimize_floating command without any pre-configured scope."
+commands.deny = ["minimize_floating"]

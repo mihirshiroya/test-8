@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-forget-database-url"
+description = "Enables the forget_database_url command without any pre-configured scope."
+commands.allow = ["forget_database_url"]
+
+[[permission]]
+identifier = "deny-forget-database-url"
+description = "Denies the forget_database_url command without any pre-configured scope."
+commands.deny = ["forget_database_url"]

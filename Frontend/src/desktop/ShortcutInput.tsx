@@ -58,7 +58,7 @@ function toAccelerator(event: KeyboardEvent): string | null {
   return [...parts, key].join("+")
 }
 
-export function formatAccelerator(accelerator: string): string {
+function formatAccelerator(accelerator: string): string {
   if (!accelerator) return "Not set"
   return accelerator
     .split("+")

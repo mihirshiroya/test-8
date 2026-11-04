@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-floating-compact"
+description = "Enables the set_floating_compact command without any pre-configured scope."
+commands.allow = ["set_floating_compact"]
+
+[[permission]]
+identifier = "deny-set-floating-compact"
+description = "Denies the set_floating_compact command without any pre-configured scope."
+commands.deny = ["set_floating_compact"]

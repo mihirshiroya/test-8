@@ -7,6 +7,16 @@
   var detail = document.getElementById("detail")
   var retry = document.getElementById("retry")
 
+  if (/Mac/i.test(navigator.userAgent)) {
+    document.documentElement.classList.add("is-mac")
+  }
+
+  document.getElementById("lights").addEventListener("click", function (event) {
+    var action = event.target.closest("[data-action]")
+    if (!action || !tauri) return
+    tauri.window.getCurrentWindow()[action.dataset.action]()
+  })
+
   function showError(text) {
     message.classList.add("error")
     messageText.textContent = "The local backend could not start."

@@ -32,9 +32,94 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-.splash {
+.titlebar {
+  --tb-bg: #ececec;
+  --tb-fg: #3f3f46;
+  --tb-field: #dddddf;
+  --tb-border: rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 560px) 1fr;
+  align-items: center;
+  gap: 16px;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--tb-bg);
+  color: var(--tb-fg);
+  border-bottom: 1px solid var(--tb-border);
+  font-size: 12px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .titlebar {
+    --tb-bg: #1e1e1e;
+    --tb-fg: #d4d4d8;
+    --tb-field: #383838;
+    --tb-border: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.titlebar-side {
   display: flex;
   height: 100%;
+  align-items: center;
+}
+
+.titlebar-lights {
+  display: flex;
+  gap: 8px;
+}
+
+/* macOS keeps its native traffic lights on top of this bar. */
+.is-mac .titlebar-lights {
+  visibility: hidden;
+}
+
+.titlebar-light {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+  cursor: default;
+}
+
+.titlebar-light.close {
+  background: #ff5f57;
+}
+
+.titlebar-light.minimize {
+  background: #febc2e;
+}
+
+.titlebar-light.maximize {
+  background: #28c840;
+}
+
+.titlebar-address {
+  display: flex;
+  height: 28px;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--tb-field);
+}
+
+.titlebar-address input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  outline: none;
+  cursor: default;
+}
+
+.splash {
+  display: flex;
+  height: calc(100% - 40px);
   flex-direction: column;
   align-items: center;
   justify-content: center;

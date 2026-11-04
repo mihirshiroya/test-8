@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="splash.css" />
   </head>
   <body>
+    <header class="titlebar" data-tauri-drag-region>
+      <div class="titlebar-side" data-tauri-drag-region>
+        <div id="lights" class="titlebar-lights">
+          <button type="button" class="titlebar-light close" data-action="close" aria-label="Close window"></button>
+          <button type="button" class="titlebar-light minimize" data-action="minimize" aria-label="Minimize window"></button>
+          <button type="button" class="titlebar-light maximize" data-action="toggleMaximize" aria-label="Maximize window"></button>
+        </div>
+      </div>
+      <div class="titlebar-address">
+        <input type="text" readonly value="notchbuddy.app" aria-label="Current page address" />
+      </div>
+      <div class="titlebar-side" data-tauri-drag-region></div>
+    </header>
     <main class="splash">
       <img src="logo.png" alt="" class="logo" width="56" height="56" />
       <p id="message" class="message" role="status">

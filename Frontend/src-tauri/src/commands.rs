@@ -56,7 +56,8 @@ pub fn set_preferences(app: AppHandle, preferences: Preferences) -> CmdResult<Sa
 #[tauri::command]
 pub fn get_shortcut_issues(app: AppHandle) -> Vec<ShortcutIssue> {
     let state = app.state::<AppState>();
-    state.shortcut_issues.lock().unwrap().clone()
+    let issues = state.shortcut_issues.lock().unwrap().clone();
+    issues
 }
 
 #[tauri::command]

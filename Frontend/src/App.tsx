@@ -71,6 +71,7 @@ import { IS_DESKTOP } from './lib/api-origin';
 import { DesktopGate } from './desktop/DesktopGate';
 import { DesktopBridge } from './desktop/DesktopBridge';
 import DesktopSettings from './desktop/DesktopSettings';
+import { DesktopTitleBar } from './desktop/DesktopTitleBar';
 
 
 const queryClient = new QueryClient({
@@ -392,6 +393,8 @@ const App: React.FC = () => {
           <QueryClientProvider client={queryClient}>
 
             <ThemeProvider>
+
+              {IS_DESKTOP && <DesktopTitleBar />}
 
               <DesktopGate>
                 <ActivityDialog />

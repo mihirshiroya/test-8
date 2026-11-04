@@ -11,6 +11,8 @@ interface TauriWindowHandle {
   label: string
   minimize(): Promise<void>
   hide(): Promise<void>
+  close(): Promise<void>
+  toggleMaximize(): Promise<void>
 }
 
 interface TauriGlobal {

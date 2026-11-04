@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-save-database-url"
+description = "Enables the save_database_url command without any pre-configured scope."
+commands.allow = ["save_database_url"]
+
+[[permission]]
+identifier = "deny-save-database-url"
+description = "Denies the save_database_url command without any pre-configured scope."
+commands.deny = ["save_database_url"]

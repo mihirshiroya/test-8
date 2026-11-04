@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-has-database-url"
+description = "Enables the has_database_url command without any pre-configured scope."
+commands.allow = ["has_database_url"]
+
+[[permission]]
+identifier = "deny-has-database-url"
+description = "Denies the has_database_url command without any pre-configured scope."
+commands.deny = ["has_database_url"]

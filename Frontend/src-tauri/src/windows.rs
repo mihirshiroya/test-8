@@ -18,20 +18,43 @@ pub const EVENT_FLOATING_VISIBILITY: &str = "desktop://floating-visibility";
 const FLOATING_SIZE: (f64, f64) = (340.0, 188.0);
 const FLOATING_COMPACT_SIZE: (f64, f64) = (260.0, 60.0);
 
+/// Window chrome is decided in code, never restored from disk: a state file saved
+/// while the native title bar was on would otherwise bring it back on launch.
 pub fn window_state_flags() -> StateFlags {
-    StateFlags::all() & !StateFlags::VISIBLE
+    StateFlags::all() & !StateFlags::VISIBLE & !StateFlags::DECORATIONS
 }
 
 /// The main window starts on the bundled splash page and is navigated to the
 /// backend once it is ready.
+///
+/// The web content draws a Safari-style 40px title bar. On macOS the native
+/// traffic lights are kept and overlaid on it; elsewhere the native frame is
+/// removed and the web title bar draws its own window controls.
 pub fn create_main(app: &AppHandle, visible: bool) -> tauri::Result<WebviewWindow> {
-    WebviewWindowBuilder::new(app, MAIN, WebviewUrl::App("index.html".into()))
+    let builder = WebviewWindowBuilder::new(app, MAIN, WebviewUrl::App("index.html".into()))
         .title("Notch Buddy")
         .inner_size(1280.0, 820.0)
         .min_inner_size(960.0, 640.0)
         .center()
-        .visible(visible)
-        .build()
+        .visible(visible);
+
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .traffic_light_position(tauri::LogicalPosition::new(14.0, 20.0));
+
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.decorations(false).shadow(true);
+
+    let window = builder.build()?;
+
+    // The window-state plugin restores saved state during `build()`; re-apply
+    // the frameless chrome afterwards so an old state file can't override it.
+    #[cfg(not(target_os = "macos"))]
+    let _ = window.set_decorations(false);
+
+    Ok(window)
 }
 
 /// Points the main window at the backend unless it already shows it.
