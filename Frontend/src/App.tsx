@@ -106,12 +106,13 @@ const DocsLayout: React.FC<{
     <div
       className="
         fixed
-        inset-0
+        inset-x-0
+        bottom-0
+        top-[var(--notch-height,0px)]
         z-[100]
-        h-screen
-        w-screen
         overflow-hidden
         bg-background
+        [transform:translateZ(0)]
       "
     >
       {children}

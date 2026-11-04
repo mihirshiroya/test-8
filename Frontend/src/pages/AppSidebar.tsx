@@ -404,7 +404,7 @@ function AppSidebar() {
 
       <div
         className={cn(
-          'grid h-screen overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',
+          'grid h-screen overflow-hidden pt-[var(--notch-height,0px)] transition-[grid-template-columns] duration-300 ease-in-out',
           collapsed
             ? 'md:grid-cols-[68px_minmax(0,1fr)]'
             : 'md:grid-cols-[240px_minmax(0,1fr)]',
@@ -416,10 +416,10 @@ function AppSidebar() {
 
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
+            'fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)] pt-[var(--notch-height,0px)] md:pt-0',
             'transition-transform duration-300 ease-in-out',
             mobileOpen ? 'translate-x-0' : '-translate-x-full',
-            'md:relative md:inset-auto md:z-auto md:h-screen md:w-full md:max-w-none md:translate-x-0',
+            'md:relative md:inset-auto md:z-auto md:h-full md:min-h-0 md:w-full md:max-w-none md:translate-x-0',
           )}
         >
           {/* Logo header */}
