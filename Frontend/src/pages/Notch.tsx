@@ -117,25 +117,15 @@ export default function NotchNavbar({
   // Measure the nav so the SVG outline matches it exactly
   useEffect(() => {
     const el = navRef.current
-    const root = document.documentElement
-    if (!el) {
-      root.style.removeProperty("--notch-height")
-      return
-    }
+    if (!el) return
 
-    // Layouts read --notch-height to reserve space so content never sits under the notch.
-    const update = () => {
+    const update = () =>
       setSize({ w: el.offsetWidth, h: el.offsetHeight })
-      root.style.setProperty("--notch-height", `${el.offsetHeight}px`)
-    }
 
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
-    return () => {
-      ro.disconnect()
-      root.style.removeProperty("--notch-height")
-    }
+    return () => ro.disconnect()
   }, [isAuthenticated])
 
   // --------------------------------------------------

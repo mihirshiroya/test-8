@@ -27,31 +27,22 @@ pub fn window_state_flags() -> StateFlags {
 /// The main window starts on the bundled splash page and is navigated to the
 /// backend once it is ready.
 ///
-/// The web content draws a Safari-style 40px title bar. On macOS the native
-/// traffic lights are kept and overlaid on it; elsewhere the native frame is
-/// removed and the web title bar draws its own window controls.
+/// The native frame is removed on every platform; the app sidebar header draws
+/// its own window controls (revealed on hover) and acts as the drag region.
 pub fn create_main(app: &AppHandle, visible: bool) -> tauri::Result<WebviewWindow> {
     let builder = WebviewWindowBuilder::new(app, MAIN, WebviewUrl::App("index.html".into()))
         .title("Notch Buddy")
         .inner_size(1280.0, 820.0)
         .min_inner_size(960.0, 640.0)
         .center()
-        .visible(visible);
-
-    #[cfg(target_os = "macos")]
-    let builder = builder
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
-        .hidden_title(true)
-        .traffic_light_position(tauri::LogicalPosition::new(14.0, 20.0));
-
-    #[cfg(not(target_os = "macos"))]
-    let builder = builder.decorations(false).shadow(true);
+        .visible(visible)
+        .decorations(false)
+        .shadow(true);
 
     let window = builder.build()?;
 
     // The window-state plugin restores saved state during `build()`; re-apply
     // the frameless chrome afterwards so an old state file can't override it.
-    #[cfg(not(target_os = "macos"))]
     let _ = window.set_decorations(false);
 
     Ok(window)

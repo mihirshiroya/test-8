@@ -22,10 +22,10 @@ import {
   Trash2,
   X,
   LogOut,
-  MonitorCog
 } from 'lucide-react'
 import { cn } from '../lib/utills'
 import { IS_DESKTOP } from '../lib/api-origin'
+import { WindowTrafficLights } from '../desktop/DesktopTitleBar'
 import ThemeSwitcher from './ThemeSwitcher'
 import { DottedText } from '../components/Ui/dotted-text'
 import noResultsRaw from '../assets/31-no-results.svg?raw'
@@ -88,7 +88,6 @@ const outletItems = [
   { label: 'Calender', path: '/Calender', icon: CalendarDays },
   { label: 'Session', path: '/session', icon: Grid2X2 },
   { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
-  ...(IS_DESKTOP ? [{ label: 'Desktop', path: '/settings/desktop', icon: MonitorCog }] : []),
 ]
 
 /**
@@ -404,7 +403,7 @@ function AppSidebar() {
 
       <div
         className={cn(
-          'grid h-screen overflow-hidden pt-[var(--notch-height,0px)] transition-[grid-template-columns] duration-300 ease-in-out',
+          'grid h-screen overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',
           collapsed
             ? 'md:grid-cols-[68px_minmax(0,1fr)]'
             : 'md:grid-cols-[240px_minmax(0,1fr)]',
@@ -416,32 +415,61 @@ function AppSidebar() {
 
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)] pt-[var(--notch-height,0px)] md:pt-0',
+            'group/sidebar fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
             'transition-transform duration-300 ease-in-out',
             mobileOpen ? 'translate-x-0' : '-translate-x-full',
             'md:relative md:inset-auto md:z-auto md:h-full md:min-h-0 md:w-full md:max-w-none md:translate-x-0',
           )}
         >
-          {/* Logo header */}
-          <div className="flex items-center gap-2 p-3">
-            <button
-              type="button"
-              onClick={() => go('/')}
-              className={cn(
-                'group flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-accent',
-                collapsed && 'md:justify-center',
-              )}
-              aria-label="Consistent home"
+          {/* Logo header — same height as the content header; on hover the logo swaps for the window controls */}
+          <div
+            data-tauri-drag-region
+            className={cn(
+              'flex h-16 shrink-0 items-center gap-2 border-b border-soft px-3',
+              collapsed && 'md:px-1',
+            )}
+          >
+            <div
+              data-tauri-drag-region
+              className={cn('flex h-8 min-w-0 flex-1 items-center', collapsed && 'md:justify-center')}
             >
-              <span
+              <button
+                type="button"
+                onClick={() => go('/')}
                 className={cn(
-                  'flex h-5 min-w-0 flex-1 items-center overflow-hidden',
-                  hideWhenCollapsed,
+                  'flex min-w-0 flex-1 items-center rounded-lg px-1.5 text-left transition-colors hover:bg-accent',
+                  collapsed && 'md:hidden',
+                  IS_DESKTOP && 'group-hover/sidebar:hidden',
+                )}
+                aria-label="Consistent home"
+              >
+                <h3 className="truncate font-extrabold text-2xl text-primary">Consistent</h3>
+              </button>
+
+              {IS_DESKTOP && (
+                <div
+                  className={cn(
+                    'hidden h-full items-center px-1.5 group-hover/sidebar:flex',
+                    collapsed && 'md:group-hover/sidebar:hidden',
+                  )}
+                >
+                  <WindowTrafficLights />
+                </div>
+              )}
+
+              {/* Desktop expand (collapsed sidebar) */}
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                aria-label="Expand sidebar"
+                className={cn(
+                  'hidden size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
+                  collapsed && 'md:flex',
                 )}
               >
-                <h3 className="font-extrabold text-2xl text-primary text-pretty">Consistent</h3>
-              </span>
-            </button>
+                <PanelLeft className="size-[18px] text-secondary" />
+              </button>
+            </div>
 
             {/* Desktop collapse */}
             <button
@@ -467,19 +495,6 @@ function AppSidebar() {
             </button>
           </div>
 
-          {/* Desktop expand toggle */}
-          {collapsed && (
-            <div className="hidden justify-center px-3 pb-1 md:flex">
-              <button
-                type="button"
-                onClick={toggleCollapsed}
-                aria-label="Expand sidebar"
-                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <PanelLeft className="size-[18px] text-secondary" />
-              </button>
-            </div>
-          )}
 
           {/* Navigation */}
           <nav
@@ -634,7 +649,7 @@ function AppSidebar() {
         {/* ================================================================== */}
 
         <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-soft border-border px-5 sm:px-8">
+          <header data-tauri-drag-region className="flex h-16 shrink-0 items-center justify-between border-b border-soft border-border px-5 sm:px-8">
             {/* Left */}
             <div className="flex items-center gap-3">
               <button

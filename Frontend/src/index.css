@@ -103,51 +103,19 @@
 @media (max-width: 1023px) { .docs-sidebar { display: none; } .docs-sidebar--open { display: block; position: fixed; inset: 32px auto 0 0; width: min(300px, 85vw); z-index: 40; } }
 @media (prefers-reduced-motion: reduce) { .work-surface *, .work-dialog * { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; } }
 
-/* Desktop title bar. The app renders in a transformed #root below the bar, so
-   `fixed` children (notch navbar, docs layout) stay under it, and viewport-height
-   utilities are shortened by the bar height. */
-.has-titlebar { --titlebar-height: 40px; }
-.has-titlebar body { overflow: hidden; }
-.has-titlebar #root { position: fixed; inset: var(--titlebar-height) 0 0 0; overflow: auto; transform: translateZ(0); }
-.has-titlebar :is(.h-screen, .h-dvh, .h-svh, .h-lvh, .docs-shell, .docs-stage) { height: calc(100dvh - var(--titlebar-height)); }
-.has-titlebar :is(.min-h-screen, .min-h-dvh, .min-h-svh, .min-h-lvh) { min-height: calc(100dvh - var(--titlebar-height)); }
-.has-titlebar :is(.max-h-screen, .max-h-dvh, .max-h-svh) { max-height: calc(100dvh - var(--titlebar-height)); }
-
-.titlebar {
-  --tb-bg: #ececec;
+/* Desktop window traffic lights, revealed in the app sidebar header on hover. */
+.window-controls {
   --tb-fg: #3f3f46;
   --tb-muted: #8e8e93;
-  --tb-field: #dddddf;
   --tb-hover: rgba(0, 0, 0, 0.06);
-  --tb-border: rgba(0, 0, 0, 0.1);
   --tb-light-off: #d1d1d6;
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 2147483647;
-  display: grid;
-  grid-template-columns: 1fr minmax(0, 560px) 1fr;
-  align-items: center;
-  gap: 16px;
-  height: var(--titlebar-height, 40px);
-  padding: 0 12px;
-  background: var(--tb-bg);
-  color: var(--tb-fg);
-  border-bottom: 1px solid var(--tb-border);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  font-size: 12px;
-  user-select: none;
-  -webkit-user-select: none;
+  flex-shrink: 0; user-select: none; -webkit-user-select: none;
 }
-.dark .titlebar {
-  --tb-bg: #1e1e1e;
+.dark .window-controls {
   --tb-fg: #d4d4d8;
-  --tb-muted: #8e8e93;
-  --tb-field: #383838;
   --tb-hover: rgba(255, 255, 255, 0.08);
-  --tb-border: rgba(255, 255, 255, 0.06);
   --tb-light-off: #4a4a4c;
 }
-.titlebar-side { display: flex; height: 100%; min-width: 0; align-items: center; gap: 14px; }
 .titlebar-native-lights { width: 64px; height: 100%; flex-shrink: 0; }
 .titlebar-nav { display: flex; align-items: center; gap: 2px; }
 .titlebar-icon {
@@ -156,7 +124,7 @@
 }
 .titlebar-icon:hover:not(:disabled) { background: var(--tb-hover); }
 .titlebar-icon:disabled { color: var(--tb-muted); opacity: 0.5; }
-.titlebar :is(button, input):focus-visible { outline: 2px solid var(--color-border-focus, #5aa9c9); outline-offset: 1px; }
+.window-controls button:focus-visible { outline: 2px solid var(--color-border-focus, #5aa9c9); outline-offset: 1px; }
 
 .titlebar-lights { display: flex; align-items: center; gap: 8px; }
 .titlebar-light {
@@ -167,27 +135,11 @@
 .titlebar-light--close { background: #ff5f57; }
 .titlebar-light--minimize { background: #febc2e; }
 .titlebar-light--maximize { background: #28c840; }
-.titlebar[data-focused="false"] .titlebar-light { background: var(--tb-light-off); }
+.window-controls[data-focused="false"] .titlebar-light { background: var(--tb-light-off); }
 .titlebar-lights:hover .titlebar-light { color: rgba(0, 0, 0, 0.6); }
 .titlebar-lights:hover .titlebar-light--close { background: #ff5f57; }
 .titlebar-lights:hover .titlebar-light--minimize { background: #febc2e; }
 .titlebar-lights:hover .titlebar-light--maximize { background: #28c840; }
-
-.titlebar-address {
-  display: flex; height: 28px; min-width: 0; align-items: center; gap: 6px;
-  padding: 0 4px 0 10px; border-radius: 8px; background: var(--tb-field);
-}
-.titlebar-address-lock { flex-shrink: 0; color: var(--tb-muted); }
-.titlebar-address-input {
-  min-width: 0; flex: 1; border: 0; padding: 0; background: transparent;
-  color: var(--tb-fg); font: inherit; text-align: center; text-overflow: ellipsis; cursor: default;
-}
-.titlebar-address-input:focus { outline: none; text-align: left; cursor: text; user-select: text; -webkit-user-select: text; }
-.titlebar-address-reload {
-  display: inline-flex; width: 22px; height: 22px; flex-shrink: 0; align-items: center; justify-content: center;
-  border: 0; border-radius: 5px; background: transparent; color: var(--tb-muted); cursor: default;
-}
-.titlebar-address-reload:hover { background: var(--tb-hover); color: var(--tb-fg); }
 
 /* Documentation-only treatments leave the rest of the workspace unchanged. */
 .docs-stage {
