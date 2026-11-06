@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { useAppDispatch } from '../store'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
@@ -17,23 +18,29 @@ import {
   Search,
   Trash2,
   X,
-  Terminal,
+  Pencil,
   ArrowRight,
   ArrowLeft,
-  AlignLeft,
   Home,
 } from 'lucide-react'
 
 import {
   fetchDoc,
   setDoc,
+  addTopic,
   addSubtopic,
-  addContent,
+  deleteTopic as deleteTopicAction,
+  deleteSubtopic as deleteSubtopicAction,
+  deleteContent as deleteContentAction,
   type NotesState,
   type StoredFolder,
 } from '../store/slices/notesSlice.ts'
 
 import type { Doc, Topic, Subtopic, Content } from '../lib/docs-data'
+import { NoteContentComposer } from '../components/Ui/note-content-composer'
+import { NoteMarkdownPreview } from '../components/Ui/note-markdown-preview'
+import { isMarkdownContent } from '../lib/note-markdown'
+import { toast } from '../lib/toast'
 
 /* Shared Tailwind class strings. Colors come from the docs-* tokens in index.css,
  * which switch values under `.dark`, so no `dark:` variants are needed here. */
@@ -50,10 +57,6 @@ const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-docs-accent'
 const DANGER = 'text-docs-danger'
 const REVEAL = 'opacity-0 [@media(hover:none)]:opacity-100'
-const PRIMARY_BTN =
-  'bg-docs-primary text-white shadow-md shadow-docs-primary/20 transition-colors hover:bg-docs-primary-hover disabled:cursor-not-allowed disabled:opacity-50'
-const FIELD =
-  'border bg-docs-soft/60 px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-docs-muted focus:border-docs-accent focus:ring-2 focus:ring-docs-accent/20'
 
 // -----------------------------------------------------------------------------
 // Types
@@ -100,6 +103,7 @@ const getFolderName = (folder?: StoredFolder | null): string => {
   if (!folder) return ''
 
   const source = folder as StoredFolder & {
+    name?: string
     title?: string
     label?: string
   }
@@ -133,7 +137,7 @@ export default function DocsWorkspace() {
 // -----------------------------------------------------------------------------
 
 function DocsWorkspaceContent({ folderId }: { folderId: string }) {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     dispatch(fetchDoc(folderId))
@@ -195,11 +199,13 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     Object.fromEntries(doc.topics.map((topic) => [topic.id, true])),
   )
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [modal, setModal] = useState<'topic' | 'subtopic' | 'content' | null>(null)
+  const [modal, setModal] = useState<'topic' | 'subtopic' | null>(null)
   const [deleteModal, setDeleteModal] = useState<DeleteModalState | null>(null)
   const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [contentType, setContentType] = useState<'text' | 'code'>('text')
+  const [composer, setComposer] = useState<{ initial?: Content; key: string } | null>(null)
+  const [draftDirty, setDraftDirty] = useState(false)
+  const [draftBusy, setDraftBusy] = useState(false)
+  const [structureBusy, setStructureBusy] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -330,7 +336,15 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // Selection
   // ---------------------------------------------------------------------------
 
+  const closeComposer = () => { setComposer(null); setDraftDirty(false); setDraftBusy(false) }
+  const openComposer = (initial?: Content) => {
+    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft?'))) return
+    setComposer({ initial, key: createId() })
+    setDraftDirty(false)
+  }
   const select = (nextTopic: Topic, nextSubtopic?: Subtopic) => {
+    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft before switching sections?'))) return
+    closeComposer()
     const targetSubtopic = nextSubtopic ?? nextTopic.subtopics[0]
 
     setTopicId(nextTopic.id)
@@ -389,71 +403,34 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   const resetModal = () => {
     setModal(null)
     setTitle('')
-    setContent('')
-    setContentType('text')
   }
 
   // ---------------------------------------------------------------------------
   // Add topic / subtopic / content
   // ---------------------------------------------------------------------------
 
-  const add = (event?: React.FormEvent<HTMLFormElement>) => {
+  const add = async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
-
     const cleanTitle = title.trim()
-    const cleanContent = content.trim()
-
-    if (!modal || !cleanTitle || (modal === 'content' && !cleanContent)) return
-
-    if (modal === 'topic') {
-      const newTopic: Topic = { id: createId(), title: cleanTitle, subtopics: [] }
-      const nextDoc: Doc = { ...doc, topics: [...doc.topics, newTopic] }
-
-      dispatch(setDoc({ folderId, doc: nextDoc }))
-
-      setTopicId(newTopic.id)
-      setSubtopicId('')
-      setExpanded((previous) => ({ ...previous, [newTopic.id]: true }))
-
-      resetModal()
-      return
-    }
-
-    if (modal === 'subtopic' && topic) {
-      dispatch(
-        addSubtopic({
-          folderId,
-          topicId: topic.id,
-          title: cleanTitle,
-          description: 'Recently added section. Click Add Content to populate.',
-        }),
-      )
-
-      setExpanded((previous) => ({ ...previous, [topic.id]: true }))
-
-      resetModal()
-      return
-    }
-
-    if (modal === 'content' && topic && subtopic) {
-      const newContent: Omit<Content, 'id'> = {
-        title: cleanTitle,
-        type: contentType,
-        content: cleanContent,
-        ...(contentType === 'code' ? { language: languageKey } : {}),
+    if (!modal || !cleanTitle || structureBusy || draftBusy) return
+    if (draftDirty && !window.confirm('Discard your unsaved draft before creating a new section?')) return
+    closeComposer()
+    setStructureBusy(true)
+    try {
+      if (modal === 'topic') {
+        const result = await dispatch(addTopic({ folderId, title: cleanTitle })).unwrap()
+        setTopicId(result.topic.id)
+        setSubtopicId('')
+        setExpanded(previous => ({ ...previous, [result.topic.id]: true }))
+      } else if (topic) {
+        const result = await dispatch(addSubtopic({ folderId, topicId: topic.id, title: cleanTitle })).unwrap()
+        setSubtopicId(result.subtopic.id)
+        setExpanded(previous => ({ ...previous, [topic.id]: true }))
       }
-
-      dispatch(
-        addContent({
-          folderId,
-          topicId: topic.id,
-          subtopicId: subtopic.id,
-          content: newContent,
-        }),
-      )
-
       resetModal()
-    }
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : 'Unable to create section.')
+    } finally { setStructureBusy(false) }
   }
 
   // ---------------------------------------------------------------------------
@@ -495,100 +472,24 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // Confirm deletion
   // ---------------------------------------------------------------------------
 
-  const confirmDelete = () => {
-    if (!deleteModal) return
-
-    if (deleteModal.type === 'topic') {
-      const remainingTopics = doc.topics.filter((item) => item.id !== deleteModal.id)
-      const nextDoc: Doc = { ...doc, topics: remainingTopics }
-
-      dispatch(setDoc({ folderId, doc: nextDoc }))
-
-      if (deleteModal.id === topicId) {
-        const nextTopic = remainingTopics[0]
-
-        if (nextTopic) {
-          setTopicId(nextTopic.id)
-          setSubtopicId(nextTopic.subtopics[0]?.id ?? '')
-          setExpanded((previous) => ({ ...previous, [nextTopic.id]: true }))
-          setActiveTocId(nextTopic.subtopics[0]?.content?.[0]?.id ?? null)
-
-          requestAnimationFrame(() => {
-            mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
-          })
-        } else {
-          setTopicId('')
-          setSubtopicId('')
-          setActiveTocId(null)
-        }
-      }
-    }
-
-    if (deleteModal.type === 'subtopic') {
-      const parentTopic = doc.topics.find((item) => item.id === deleteModal.parentTopicId)
-
-      if (parentTopic) {
-        const remainingSubtopics = parentTopic.subtopics.filter(
-          (item) => item.id !== deleteModal.id,
-        )
-
-        const nextDoc: Doc = {
-          ...doc,
-          topics: doc.topics.map((item) =>
-            item.id === parentTopic.id ? { ...item, subtopics: remainingSubtopics } : item,
-          ),
-        }
-
-        dispatch(setDoc({ folderId, doc: nextDoc }))
-
-        if (deleteModal.id === subtopicId) {
-          const nextSubtopic = remainingSubtopics[0]
-
-          setTopicId(parentTopic.id)
-          setSubtopicId(nextSubtopic?.id ?? '')
-          setActiveTocId(nextSubtopic?.content?.[0]?.id ?? null)
-
-          requestAnimationFrame(() => {
-            mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
-          })
-        }
-      }
-    }
-
-    if (deleteModal.type === 'content') {
-      if (topic && subtopic) {
-        const nextDoc: Doc = {
-          ...doc,
-          topics: doc.topics.map((currentTopic) =>
-            currentTopic.id !== topic.id
-              ? currentTopic
-              : {
-                  ...currentTopic,
-                  subtopics: currentTopic.subtopics.map((currentSubtopic) =>
-                    currentSubtopic.id !== subtopic.id
-                      ? currentSubtopic
-                      : {
-                          ...currentSubtopic,
-                          content: currentSubtopic.content.filter(
-                            (item) => item.id !== deleteModal.id,
-                          ),
-                        },
-                  ),
-                },
-          ),
-        }
-
-        dispatch(setDoc({ folderId, doc: nextDoc }))
-
-        if (activeTocId === deleteModal.id) {
-          setActiveTocId(
-            subtopic.content.find((item) => item.id !== deleteModal.id)?.id ?? null,
-          )
-        }
-      }
-    }
-
-    setDeleteModal(null)
+  const confirmDelete = async () => {
+    if (!deleteModal || structureBusy || draftBusy) return
+    const affectsDraft = composer && (
+      (deleteModal.type === 'topic' && deleteModal.id === topicId) ||
+      (deleteModal.type === 'subtopic' && deleteModal.id === subtopicId) ||
+      (deleteModal.type === 'content' && deleteModal.id === composer.initial?.id)
+    )
+    if (affectsDraft && draftDirty && !window.confirm('Discard your unsaved draft and delete this content?')) return
+    if (affectsDraft) closeComposer()
+    setStructureBusy(true)
+    try {
+      if (deleteModal.type === 'topic') await dispatch(deleteTopicAction({ folderId, topicId: deleteModal.id })).unwrap()
+      else if (deleteModal.type === 'subtopic' && deleteModal.parentTopicId) await dispatch(deleteSubtopicAction({ folderId, topicId: deleteModal.parentTopicId, subtopicId: deleteModal.id })).unwrap()
+      else if (topic && subtopic) await dispatch(deleteContentAction({ folderId, topicId: topic.id, subtopicId: subtopic.id, contentId: deleteModal.id })).unwrap()
+      setDeleteModal(null)
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : 'Unable to delete content.')
+    } finally { setStructureBusy(false) }
   }
 
   // ---------------------------------------------------------------------------
@@ -651,14 +552,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // Code placeholder (based on the folder NAME)
   // ---------------------------------------------------------------------------
 
-  const codePlaceholder =
-    languageKey === 'python'
-      ? `def my_function():\n    print("Hello from Python!")`
-      : languageKey === 'javascript' || languageKey === 'typescript'
-        ? `function myFunction() {\n  console.log("Hello!");\n}`
-        : languageKey === 'tsx'
-          ? `function MyComponent() {\n  return <div>Hello!</div>;\n}`
-          : `public void myMethod() {\n    System.out.println("Hello!");\n}`
+
 
   // ---------------------------------------------------------------------------
   // Sidebar
@@ -763,6 +657,15 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   return (
     <div
       className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
+      onClickCapture={event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+        const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
+        if (!anchor || anchor.getAttribute('target') === '_blank') return
+        if (draftBusy || (draftDirty && !window.confirm('Leave this page and discard your unsaved draft?'))) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+      }}
     >
       <DocsMobileHeader
         title={meta.label}
@@ -826,7 +729,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setModal('content')}
+                    onClick={() => openComposer()}
                     disabled={!subtopic}
                     title="Add content"
                     className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-docs-accent disabled:cursor-not-allowed disabled:opacity-45 ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
@@ -843,6 +746,8 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
               )}
             </div>
 
+            {composer && topic && subtopic && <NoteContentComposer key={composer.key} folderId={folderId} topicId={topic.id} subtopicId={subtopic.id} initial={composer.initial} onClose={closeComposer} onDirtyChange={setDraftDirty} onBusyChange={setDraftBusy} />}
+
             {/* Content */}
             {subtopic?.content && subtopic.content.length > 0 ? (
               <div className="flex flex-col gap-8">
@@ -853,11 +758,12 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                     className="group relative scroll-mt-6"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <h2
-                        className={`text-[18px] font-bold leading-normal capitalize [overflow-wrap:anywhere] ${INK}`}
+                      {!isMarkdownContent(item) && <h2
+                        className={`text-[18px] font-bold leading-normal [overflow-wrap:anywhere] ${INK}`}
                       >
                         {item.title}
-                      </h2>
+                      </h2>}
+                      <button type="button" className="note-tool ml-auto" onClick={() => openComposer(item)} disabled={draftBusy} aria-label={`Edit ${item.title || 'content'}`}><Pencil size={14} />Edit</button>
 
                       <button
                         type="button"
@@ -878,9 +784,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                         onCopy={() => void handleCopy(item.content, item.id)}
                       />
                     ) : (
-                      <div className={`text-[14px] leading-[1.9] [overflow-wrap:anywhere] ${MUTED}`}>
-                        <p className="whitespace-pre-wrap font-semibold text-steel font-inter! text-pretty">{item.content}</p>
-                      </div>
+                      <NoteMarkdownPreview markdown={item.content} />
                     )}
                   </section>
                 ))}
@@ -1105,7 +1009,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
             <AppDialogButton variant="secondary" onClick={() => setDeleteModal(null)}>
               Cancel
             </AppDialogButton>
-            <AppDialogButton variant="destructive" onClick={confirmDelete} className="capitalize">
+            <AppDialogButton variant="destructive" onClick={() => void confirmDelete()} disabled={structureBusy || draftBusy} className="capitalize">
               <Trash2 className="size-4" />
               Delete {deleteModal?.type}
             </AppDialogButton>
@@ -1146,7 +1050,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
             </AppDialogButton>
             <AppDialogButton
               type="submit"
-              disabled={!title.trim() || (modal === 'content' && !content.trim())}
+              disabled={!title.trim() || structureBusy || draftBusy}
               className="capitalize"
             >
               Create {modal}
@@ -1176,87 +1080,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
           />
         </AppDialogSection>
 
-        {modal === 'content' && (
-          <>
-            <fieldset className="flex flex-col gap-3">
-              <legend className="mb-3 text-sm font-semibold text-ink font-inter!">Block type</legend>
-              {(
-                [
-                  {
-                    value: 'text',
-                    label: 'Text / Paragraph',
-                    hint: 'Plain explanation or documentation prose.',
-                    Icon: AlignLeft,
-                  },
-                  {
-                    value: 'code',
-                    label: 'Code Snippet',
-                    hint: `A ${meta.label} code example with syntax highlighting.`,
-                    Icon: Terminal,
-                  },
-                ] as const
-              ).map(({ value, label: optionLabel, hint, Icon }) => {
-                const selected = contentType === value
-                return (
-                  <label
-                    key={value}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border bg-canvas p-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary ${
-                      selected ? 'border-primary' : 'border-soft hover:bg-gray-tint'
-                    }`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full border border-soft bg-surface text-charcoal"
-                    >
-                      <Icon className="size-[18px]" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-ink font-inter!">
-                        {optionLabel}
-                      </span>
-                      <span className="mt-0.5 block text-sm text-steel">{hint}</span>
-                    </span>
-                    <input
-                      type="radio"
-                      name="docs-block-type"
-                      value={value}
-                      checked={selected}
-                      onChange={() => setContentType(value)}
-                      className="sr-only"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className={`mt-2 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                        selected ? 'border-primary' : 'border-soft bg-gray-tint'
-                      }`}
-                    >
-                      {selected && <span className="size-2.5 rounded-full bg-primary" />}
-                    </span>
-                  </label>
-                )
-              })}
-            </fieldset>
 
-            <AppDialogSection
-              icon={contentType === 'code' ? <Terminal /> : <AlignLeft />}
-              title={contentType === 'code' ? `Code body (${meta.label})` : 'Content paragraph'}
-              htmlFor="docs-create-content"
-            >
-              <textarea
-                id="docs-create-content"
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                rows={6}
-                className={`${appDialogInputClass} h-auto resize-none py-3 font-mono`}
-                placeholder={
-                  contentType === 'code'
-                    ? codePlaceholder
-                    : 'Write your documentation explanation here...'
-                }
-              />
-            </AppDialogSection>
-          </>
-        )}
       </AppDialog>
     </div>
   )

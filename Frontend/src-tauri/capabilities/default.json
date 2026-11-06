@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "IPC for the splash page and the app pages served by the local Go backend. Only 127.0.0.1 origins get access, and the backend itself rejects any request without the per-launch desktop token.",
-  "windows": ["main", "floating"],
+  "windows": ["main", "floating", "checkin"],
   "local": true,
   "remote": {
     "urls": ["http://127.0.0.1:*/*", "http://127.0.0.1:*"]
@@ -36,6 +36,12 @@
     "allow-minimize-floating",
     "allow-show-dashboard",
     "allow-timer-action-via-main",
+    "allow-show-checkin",
+    "allow-hide-checkin",
+    "allow-schedule-checkin",
+    "allow-cancel-checkin",
+    "allow-get-checkin",
+    "allow-checkin-response",
     "allow-notify",
     "allow-get-autostart",
     "allow-set-autostart",

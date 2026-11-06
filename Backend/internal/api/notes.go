@@ -196,15 +196,14 @@ func insertTree(ctx context.Context, tx pgx.Tx, noteID string, topics []httpx.Bo
 				subID, topicID, orDefault(cleanString(st.Raw("title")), "Untitled subtopic"),
 				nullIfEmpty(cleanString(st.Raw("description"))), si, now)
 			for ci, c := range bodyObjects(st.Raw("content")) {
-				kind, ok := oneOf(c.Raw("type"), contentTypes)
-				if !ok {
-					kind = "text"
+				content, err := normalizeNoteContent(c, nil, false)
+				if err != nil {
+					return err
 				}
-				body, _ := exactString(c.Raw("content"))
 				batch.Queue(`INSERT INTO contents (id, "subtopicId", title, type, content, language, position, "createdAt", "updatedAt")
 					VALUES ($1, $2, $3, $4::text::"ContentType", $5, $6, $7, $8, $8)`,
-					newID(), subID, cleanString(c.Raw("title")), kind, body,
-					nullIfEmpty(cleanString(c.Raw("language"))), ci, now)
+					newID(), subID, content.Title, content.Type, content.Content,
+					nullIfEmpty(content.Language), ci, now)
 			}
 		}
 	}
@@ -343,6 +342,10 @@ func (s *Server) createNote(w http.ResponseWriter, r *http.Request) {
 		httpx.Fail(w, http.StatusBadRequest, "topics must be an array")
 		return
 	}
+	if err := validateNoteContentTree(bodyObjects(b.Raw("topics"))); err != nil {
+		httpx.Fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	var folder *folderJSON
 	var doc docJSON
@@ -450,6 +453,10 @@ func (s *Server) replaceDoc(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, ok := docBody.Array("topics"); !ok {
 		httpx.Fail(w, http.StatusBadRequest, "doc.topics must be an array")
+		return
+	}
+	if err := validateNoteContentTree(bodyObjects(docBody.Raw("topics"))); err != nil {
+		httpx.Fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	noteID := urlParam(r, "noteId")
@@ -694,21 +701,10 @@ func (s *Server) addContent(w http.ResponseWriter, r *http.Request) {
 	const label, msg = "Add content", "Failed to add content"
 	ctx := r.Context()
 	b := httpx.BodyFrom(r)
-	kind := "text"
-	if b.Has("type") {
-		var ok bool
-		if kind, ok = oneOf(b.Raw("type"), contentTypes); !ok {
-			httpx.Fail(w, http.StatusBadRequest, oneOfMessage("type", contentTypes))
-			return
-		}
-	}
-	body := ""
-	if b.Has("content") {
-		var ok bool
-		if body, ok = exactString(b.Raw("content")); !ok {
-			httpx.Fail(w, http.StatusBadRequest, "content must be a string")
-			return
-		}
+	content, err := normalizeNoteContent(b, nil, true)
+	if err != nil {
+		httpx.Fail(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	subtopicID := urlParam(r, "subtopicId")
 	noteID, err := ownedParent(ctx, s.db, ownedSubtopicSQL, subtopicID, reqctx.UserID(ctx))
@@ -728,8 +724,8 @@ func (s *Server) addContent(w http.ResponseWriter, r *http.Request) {
 	created, err := scanContent(s.db.QueryRow(ctx, `INSERT INTO contents
 		(id, "subtopicId", title, type, content, language, position, "createdAt", "updatedAt")
 		VALUES ($1, $2, $3, $4::text::"ContentType", $5, $6, $7, $8, $8)`+contentReturning,
-		newID(), subtopicID, cleanString(b.Raw("title")), kind, body,
-		nullIfEmpty(cleanString(b.Raw("language"))), pos, compat.Now()))
+		newID(), subtopicID, content.Title, content.Type, content.Content,
+		nullIfEmpty(content.Language), pos, compat.Now()))
 	if err != nil {
 		s.serverError(w, label, err, msg)
 		return
@@ -742,31 +738,7 @@ func (s *Server) updateContent(w http.ResponseWriter, r *http.Request) {
 	const label, msg = "Update content", "Failed to update content"
 	ctx := r.Context()
 	b := httpx.BodyFrom(r)
-	sets := new(database.Sets)
-	if b.Has("type") {
-		kind, ok := oneOf(b.Raw("type"), contentTypes)
-		if !ok {
-			httpx.Fail(w, http.StatusBadRequest, oneOfMessage("type", contentTypes))
-			return
-		}
-		sets.AddEnum("type", "ContentType", kind)
-	}
-	if b.Has("content") {
-		body, ok := exactString(b.Raw("content"))
-		if !ok {
-			httpx.Fail(w, http.StatusBadRequest, "content must be a string")
-			return
-		}
-		sets.Add("content", body)
-	}
-	if b.Has("title") {
-		// contents.title is NOT NULL; an empty title is serialised as absent.
-		sets.Add("title", cleanString(b.Raw("title")))
-	}
-	if b.Has("language") {
-		sets.Add("language", nullIfEmpty(cleanString(b.Raw("language"))))
-	}
-	if sets.Len() == 0 {
+	if !b.Has("type") && !b.Has("content") && !b.Has("title") && !b.Has("language") {
 		httpx.Fail(w, http.StatusBadRequest, "No valid fields to update")
 		return
 	}
@@ -780,10 +752,18 @@ func (s *Server) updateContent(w http.ResponseWriter, r *http.Request) {
 		httpx.Fail(w, http.StatusNotFound, "Content not found")
 		return
 	}
-	sets.Add("updatedAt", compat.Now())
-	clause, args, next := sets.Build()
-	updated, err := scanContent(s.db.QueryRow(ctx, `UPDATE contents SET `+clause+` WHERE id = $`+itoa(next)+contentReturning,
-		append(args, contentID)...))
+	current, err := scanContent(s.db.QueryRow(ctx, `SELECT id, title, type::text, content, language FROM contents WHERE id = $1`, contentID))
+	if err != nil {
+		s.serverError(w, label, err, msg)
+		return
+	}
+	content, err := normalizeNoteContent(b, &current, true)
+	if err != nil {
+		httpx.Fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	updated, err := scanContent(s.db.QueryRow(ctx, `UPDATE contents SET title = $2, type = $3::text::"ContentType", content = $4, language = $5, "updatedAt" = $6 WHERE id = $1`+contentReturning,
+		contentID, content.Title, content.Type, content.Content, nullIfEmpty(content.Language), compat.Now()))
 	if err != nil {
 		s.serverError(w, label, err, msg)
 		return

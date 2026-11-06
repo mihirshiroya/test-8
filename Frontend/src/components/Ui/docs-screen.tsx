@@ -1,12 +1,11 @@
-import { ArrowLeft, BookOpen, Check, Copy, FileText, Menu, Pencil, Search, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, FileText, Menu, Pencil, Search, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { NoteCodePreview } from './note-code-preview'
 
 const LINE = 'border-[#eeecf2] dark:border-[#302c38]'
 const MUTED = 'text-[#716d79] dark:text-[#aaa4b5]'
 const INK = 'text-[#28262e] dark:text-[#eeeaf4]'
-const SOFT_BG = 'bg-[#f7f6f9] dark:bg-[#24212b]'
 const HOVER_SOFT = 'hover:bg-[#f7f6f9] dark:hover:bg-[#24212b]'
-const ACCENT_BORDER_HOVER = 'hover:border-[#6950a8] dark:hover:border-[#c1a5ef]'
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#6950a8] dark:focus-visible:outline-[#c1a5ef]'
 const ICON_BUTTON = `inline-flex min-h-8 min-w-8 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${MUTED} ${HOVER_SOFT} hover:text-[#28262e] dark:hover:text-[#eeeaf4] ${FOCUS}`
@@ -85,35 +84,5 @@ export function DocsCodeBlock({
   copied: boolean
   onCopy: () => void
 }) {
-  return (
-    <div className="overflow-hidden border border-soft">
-      {/* Header */}
-      <div className="flex min-h-10 items-center justify-between gap-4 border-b border-soft bg-canvas px-4 py-[7px] text-[10px] text-[#a0a7b5]">
-        <span className="truncate font-mono" title={label}>
-          {label}
-        </span>
-
-        <button
-          type="button"
-          onClick={onCopy}
-          aria-label={`Copy ${label}`}
-          className={`inline-flex shrink-0 cursor-pointer items-center gap-[7px] rounded px-[5px] py-1 text-[10px] transition-colors hover:bg-[#252a34] hover:text-[#e1e5ed] ${FOCUS}`}
-        >
-          <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
-          {copied ? <Check size={13} /> : <Copy size={13} />}
-        </button>
-      </div>
-
-      {/* Code content */}
-      <div className="bg-background text-slate-500">
-        <pre
-          tabIndex={0}
-          aria-label={`${label} code`}
-          className={`m-0 overflow-x-auto p-[22px] text-xs leading-[1.85] [scrollbar-color:#353b47_transparent] [scrollbar-width:thin] [tab-size:2] selection:bg-[#46365f] selection:text-white ${FOCUS}`}
-        >
-          <code>{content}</code>
-        </pre>
-      </div>
-    </div>
-  )
+  return <NoteCodePreview content={content} language={label} copied={copied} onCopy={onCopy} />
 }

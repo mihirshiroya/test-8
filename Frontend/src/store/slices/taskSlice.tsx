@@ -11,7 +11,7 @@ import { useDispatch, useSelector, useStore } from "react-redux"
 import { useCallback, useEffect, useMemo } from "react"
 import type { TintKey, IconKey } from "../../components/Ui/project-data"
 import { refreshSession } from "../../api/session"
-import { API_ORIGIN, IS_DESKTOP } from "../../lib/api-origin"
+import { API_ORIGIN } from "../../lib/api-origin"
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -729,15 +729,6 @@ const taskSlice = createSlice({
       state.timer = IDLE_TIMER
     },
 
-    // Desktop: while the dashboard is hidden in the tray nobody can answer the
-    // "are you still working?" prompt, so restart its interval instead of
-    // letting it auto-hold a timer the user deliberately left running.
-    checkInDeferred: (state) => {
-      if (state.timer.phase !== "running") return
-      state.timer.lastCheckTime = Date.now()
-      state.timer.isStale = false
-      state.timer.checkDeadline = null
-    },
 
     timerTick: (state) => {
       // Never tick without an in-progress task.
@@ -761,7 +752,7 @@ const taskSlice = createSlice({
 
       if (!state.timer.isStale && now - state.timer.lastCheckTime >= CHECK_INTERVAL_MS) {
         state.timer.isStale = true
-        state.timer.checkDeadline = now + RESPONSE_WINDOW_MS
+        state.timer.checkDeadline = state.timer.lastCheckTime + CHECK_INTERVAL_MS + RESPONSE_WINDOW_MS
       }
     },
 
@@ -866,7 +857,6 @@ export const {
   timerSet,
   timerUpdated,
   timerCleared,
-  checkInDeferred,
   timerTick,
   pendingAdd,
   pendingRemove,
@@ -1513,10 +1503,8 @@ export function useTaskTimerEngine() {
 
     if (engineConsumers === 1) {
       engineInterval = setInterval(() => {
-        if (IS_DESKTOP && document.hidden) {
-          dispatch(checkInDeferred())
-          return
-        }
+        // The native check-in window remains answerable while the dashboard
+        // is hidden. Never defer its deadline based on document visibility.
         dispatch(timerTick())
         void dispatch(autoHoldIfExpired())
       }, 1000)

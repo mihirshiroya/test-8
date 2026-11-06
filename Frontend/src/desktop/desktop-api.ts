@@ -92,6 +92,37 @@ export const setFloatingCompact = (compact: boolean) =>
   invoke<DesktopPreferences>("set_floating_compact", { compact })
 export const showDashboard = (path?: string) => invoke<void>("show_dashboard", { path: path ?? null })
 
+/** Data the main window hands to the system-wide "Still focusing?" window. */
+export interface CheckinPayload {
+  taskId: string
+  taskTitle: string
+  workspaceLabel: string
+  /** Seconds spent when the payload was sent; the overlay keeps counting from `sentAt`. */
+  spentSeconds: number
+  sentAt: number
+  /** Epoch ms when the task is auto-paused. */
+  deadline: number
+}
+
+/** "timeout" is sent by the prompt window when its countdown reaches zero. */
+export type CheckinAnswer = "continue" | "pause" | "timeout"
+
+/** Shows the prompt natively at `fireAt` (epoch ms), even if this webview is throttled. */
+export const scheduleCheckin = (payload: CheckinPayload, fireAt: number) =>
+  invoke<void>("schedule_checkin", { payload, fireAt: Math.round(fireAt) })
+export const cancelCheckin = () => invoke<void>("cancel_checkin")
+
+export const showCheckin = (payload: CheckinPayload) => invoke<void>("show_checkin", { payload })
+export const hideCheckin = () => invoke<void>("hide_checkin")
+export const getCheckin = () => invoke<CheckinPayload | null>("get_checkin")
+export interface CheckinResponse {
+  taskId: string
+  action: CheckinAnswer
+}
+
+export const answerCheckin = (action: CheckinAnswer, taskId: string, deadline: number) =>
+  invoke<void>("checkin_response", { action, taskId, deadline })
+
 export const getShortcutIssues = () => invoke<ShortcutIssue[]>("get_shortcut_issues")
 export const exportPreferences = () => invoke<string | null>("export_preferences")
 export const importPreferences = () => invoke<SavePreferencesResult | null>("import_preferences")
@@ -110,4 +141,6 @@ export const DESKTOP_EVENTS = {
   floatingVisibility: "desktop://floating-visibility",
   backendRestarted: "desktop://backend-restarted",
   backendExited: "desktop://backend-exited",
+  checkin: "desktop://checkin",
+  checkinResponse: "desktop://checkin-response",
 } as const

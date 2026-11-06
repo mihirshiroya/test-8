@@ -1,5 +1,6 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useMemo, useState, useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
+import { useAppDispatch } from '../store'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
 import { DocsEmptyState } from '../components/Ui/docs-empty-set'
@@ -13,9 +14,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Home,
-  Pencil,
 } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { NoteMarkdownPreview } from '../components/Ui/note-markdown-preview'
+import { isMarkdownContent } from '../lib/note-markdown'
 
 /* Shared Tailwind class strings. Colors come from the docs-* tokens in index.css,
  * which switch values under `.dark`, so no `dark:` variants are needed here. */
@@ -23,7 +25,6 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 const LINE = 'border-docs-line'
 const MUTED = 'text-docs-muted'
 const INK = 'text-docs-ink'
-const HOVER_SOFT = 'hover:bg-docs-soft'
 const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-docs-accent'
 
@@ -38,7 +39,7 @@ export default function DocsViewer() {
 }
 
 function DocsViewerContent({ folderId }: { folderId: string }) {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   const reduxDoc = useSelector(selectDoc(folderId))
   const docStatus = useSelector(selectDocStatus(folderId))
@@ -412,11 +413,11 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
               <div className="flex flex-col gap-8">
                 {subtopic.content.map((item) => (
                   <section id={`content-${item.id}`} key={item.id} className="scroll-mt-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h2 className={`text-[18px] font-bold leading-normal capitalize [overflow-wrap:anywhere] ${INK}`}>
+                    {!isMarkdownContent(item) && <div className="mb-4 flex items-center justify-between">
+                      <h2 className={`text-[18px] font-bold leading-normal [overflow-wrap:anywhere] ${INK}`}>
                         {item.title}
                       </h2>
-                    </div>
+                    </div>}
 
                     {item.type === 'code' ? (
                       <DocsCodeBlock
@@ -426,9 +427,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                         onCopy={() => void handleCopy(item.content, item.id)}
                       />
                     ) : (
-                      <div className={`text-[14px] leading-[1.9] [overflow-wrap:anywhere] ${MUTED}`}>
-                        <p className="whitespace-pre-wrap font-semibold text-steel font-inter! text-pretty">{item.content}</p>
-                      </div>
+                      <NoteMarkdownPreview markdown={item.content} />
                     )}
                   </section>
                 ))}

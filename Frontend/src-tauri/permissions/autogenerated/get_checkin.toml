@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-get-checkin"
+description = "Enables the get_checkin command without any pre-configured scope."
+commands.allow = ["get_checkin"]
+
+[[permission]]
+identifier = "deny-get-checkin"
+description = "Denies the get_checkin command without any pre-configured scope."
+commands.deny = ["get_checkin"]

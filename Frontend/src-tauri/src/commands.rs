@@ -193,6 +193,45 @@ pub fn timer_action_via_main(app: AppHandle, action: String) {
     windows::send_action(&app, &action);
 }
 
+/// Shows (or refreshes) the system-wide "Still focusing?" prompt.
+#[tauri::command]
+pub async fn show_checkin(app: AppHandle, payload: serde_json::Value) -> CmdResult<()> {
+    // WebView2 creation can deadlock in synchronous commands on Windows.
+    tauri::async_runtime::spawn_blocking(move || windows::show_checkin(&app, payload))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn hide_checkin(app: AppHandle) {
+    windows::hide_checkin(&app);
+}
+
+/// Natively shows the prompt at `fire_at` (epoch ms), independent of webview timers.
+#[tauri::command]
+pub async fn schedule_checkin(app: AppHandle, payload: serde_json::Value, fire_at: u64) -> CmdResult<()> {
+    tauri::async_runtime::spawn_blocking(move || windows::schedule_checkin(&app, payload, fire_at))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn cancel_checkin(app: AppHandle) {
+    windows::cancel_checkin(&app);
+}
+
+/// The prompt window reads the current payload when it first loads.
+#[tauri::command]
+pub fn get_checkin(app: AppHandle) -> Option<serde_json::Value> {
+    app.state::<AppState>().checkin.lock().unwrap().clone()
+}
+
+/// Only the task and deadline currently displayed may be answered.
+#[tauri::command]
+pub fn checkin_response(app: AppHandle, action: String, task_id: String, deadline: u64) -> CmdResult<()> {
+    windows::checkin_response(&app, &action, &task_id, deadline)
+}
+
 #[tauri::command]
 pub fn notify(app: AppHandle, title: String, body: String) -> CmdResult<()> {
     if !app.state::<AppState>().preferences.get().notifications_enabled {

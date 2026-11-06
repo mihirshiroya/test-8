@@ -29,6 +29,7 @@ import { WindowTrafficLights } from '../desktop/DesktopTitleBar'
 import ThemeSwitcher from './ThemeSwitcher'
 import { DottedText } from '../components/Ui/dotted-text'
 import noResultsRaw from '../assets/31-no-results.svg?raw'
+import logo from '../assets/logo.png'
 import { ThemedSvg } from '../lib/svg-theme'
 import {
   ProjectDialog,
@@ -437,38 +438,33 @@ function AppSidebar() {
                 type="button"
                 onClick={() => go('/')}
                 className={cn(
-                  'flex min-w-0 flex-1 items-center rounded-lg px-1.5 text-left transition-colors hover:bg-accent',
-                  collapsed && 'md:hidden',
+                  'flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg px-1.5 text-left transition-colors hover:bg-accent',
+                  collapsed && 'md:flex-none md:justify-center md:px-0',
                   IS_DESKTOP && 'group-hover/sidebar:hidden',
                 )}
                 aria-label="Consistent home"
               >
-                <h3 className="truncate font-extrabold text-2xl text-primary">Consistent</h3>
+                <img src={logo} alt="" className="size-7 shrink-0" />
+                <h3
+                  className={cn(
+                    'truncate font-extrabold text-2xl text-primary',
+                    collapsed && 'md:hidden',
+                  )}
+                >
+                  Consistent
+                </h3>
               </button>
 
               {IS_DESKTOP && (
                 <div
                   className={cn(
                     'hidden h-full items-center px-1.5 group-hover/sidebar:flex',
-                    collapsed && 'md:group-hover/sidebar:hidden',
+                    collapsed && 'md:px-0',
                   )}
                 >
                   <WindowTrafficLights />
                 </div>
               )}
-
-              {/* Desktop expand (collapsed sidebar) */}
-              <button
-                type="button"
-                onClick={toggleCollapsed}
-                aria-label="Expand sidebar"
-                className={cn(
-                  'hidden size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
-                  collapsed && 'md:flex',
-                )}
-              >
-                <PanelLeft className="size-[18px] text-secondary" />
-              </button>
             </div>
 
             {/* Desktop collapse */}
@@ -503,6 +499,19 @@ function AppSidebar() {
           >
             {/* Main navigation */}
             <ul className="mb-4 flex flex-col gap-0.5">
+              {collapsed && (
+                <li className="hidden md:block">
+                  <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    aria-label="Expand sidebar"
+                    title="Expand sidebar"
+                    className={cn(linkClass({ isActive: false }), 'w-full')}
+                  >
+                    <PanelLeft className={iconClass({ isActive: false })} />
+                  </button>
+                </li>
+              )}
               {outletItems.map(({ label, path, icon: Icon }) => (
                 <li key={path}>
                   <NavLink

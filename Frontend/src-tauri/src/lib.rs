@@ -7,7 +7,7 @@ mod tray;
 mod windows;
 
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
+    atomic::{AtomicBool, AtomicU64, Ordering},
     Mutex,
 };
 
@@ -30,6 +30,11 @@ pub struct AppState {
     pub tray: TrayHandles,
     pub shortcuts: ShortcutRegistry,
     pub shortcut_issues: Mutex<Vec<ShortcutIssue>>,
+    /// Payload of the "Still focusing?" prompt while it is open.
+    pub checkin: Mutex<Option<serde_json::Value>>,
+    pub checkin_window_lock: Mutex<()>,
+    /// Bumped on every schedule/cancel so stale native timers do nothing.
+    pub checkin_generation: AtomicU64,
     quitting: AtomicBool,
 }
 
@@ -101,6 +106,12 @@ pub fn run() {
             commands::minimize_floating,
             commands::show_dashboard,
             commands::timer_action_via_main,
+            commands::show_checkin,
+            commands::hide_checkin,
+            commands::schedule_checkin,
+            commands::cancel_checkin,
+            commands::get_checkin,
+            commands::checkin_response,
             commands::notify,
             commands::get_autostart,
             commands::set_autostart,
@@ -122,6 +133,9 @@ pub fn run() {
                 tray,
                 shortcuts: ShortcutRegistry::default(),
                 shortcut_issues: Mutex::new(Vec::new()),
+                checkin: Mutex::new(None),
+                checkin_window_lock: Mutex::new(()),
+                checkin_generation: AtomicU64::new(0),
                 quitting: AtomicBool::new(false),
             });
 

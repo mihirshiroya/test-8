@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { FloatingTimer } from "./FloatingTimer"
 import { configureTimerClient } from "./timer-store"
+import { useSharedTheme } from "./use-shared-theme"
 
 export const FLOATING_ROUTE = "/floating-timer"
 
@@ -12,23 +13,6 @@ configureTimerClient({ allowRefresh: false })
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 })
-
-/** Follows the theme chosen in the main window (shared localStorage). */
-function useSharedTheme() {
-  const [theme, setTheme] = useState(() => (localStorage.getItem("theme") === "dark" ? "dark" : "light"))
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === "theme") setTheme(event.newValue === "dark" ? "dark" : "light")
-    }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
-  }, [])
-  useEffect(() => {
-    const root = document.documentElement
-    root.classList.remove("light", "dark")
-    root.classList.add(theme)
-  }, [theme])
-}
 
 export default function FloatingApp() {
   useSharedTheme()

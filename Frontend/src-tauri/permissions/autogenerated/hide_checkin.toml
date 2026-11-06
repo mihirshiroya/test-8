@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-hide-checkin"
+description = "Enables the hide_checkin command without any pre-configured scope."
+commands.allow = ["hide_checkin"]
+
+[[permission]]
+identifier = "deny-hide-checkin"
+description = "Denies the hide_checkin command without any pre-configured scope."
+commands.deny = ["hide_checkin"]
