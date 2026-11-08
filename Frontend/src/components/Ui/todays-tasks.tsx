@@ -69,7 +69,7 @@ export function TodaysTasks() {
 
   return (
     // Fixed container height
-    <div className="relative flex h-[420px] w-full flex-col overflow-hidden border-2 border-soft p-6 animate-fadeIn">
+    <div className="workspace-panel relative flex h-[360px] w-full flex-col overflow-hidden">
       {/* Header */}
       <div className="relative z-10 flex shrink-0 items-center justify-between">
         <div className="min-w-0">
@@ -82,7 +82,7 @@ export function TodaysTasks() {
           </p>
         </div>
 
-        <BookOpenCheck className="size-8 shrink-0 text-steel" />
+        <BookOpenCheck className="size-5 shrink-0 text-steel" aria-hidden="true" />
       </div>
 
       {/* Progress */}

@@ -162,18 +162,18 @@ export function Notes() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      <main className="flex min-w-0 flex-1 flex-col">
+    <div className="flex min-h-full w-full bg-background">
+      <section aria-label="Notes workspace" className="flex min-w-0 flex-1 flex-col">
         {/* ----------------------------------------------------------------- */}
         {/* Header                                                            */}
         {/* ----------------------------------------------------------------- */}
 
-        <header className="flex items-center gap-3 pb-4">
+        <header className="workspace-toolbar workspace-page-heading flex items-center gap-3">
           <h1 className="shrink-0 text-heading-3 text-primary text-balance !font-inter">
             All Notes
           </h1>
 
-          <div className="ml-auto flex h-10 min-w-0 flex-1 items-center gap-2 border border-soft px-3 sm:max-w-xs !font-inter">
+          <div className="workspace-search ml-auto flex h-9 min-w-0 flex-1 items-center gap-2 border border-soft px-3 sm:max-w-xs !font-inter">
             <Search className="size-4 shrink-0 text-stone" />
 
             <input
@@ -189,10 +189,11 @@ export function Notes() {
           <button
             type="button"
             onClick={openCreateDialog}
-            className="flex h-10 shrink-0 items-center gap-2 bg-primary px-3.5 text-sm font-medium text-on-primary hover:bg-primary-pressed"
+            aria-label="Create folder"
+            className="flex h-9 shrink-0 items-center gap-2 bg-primary px-3.5 text-xs font-semibold text-on-primary hover:bg-primary-pressed"
           >
             <Plus className="size-4" />
-
+            <span className="hidden sm:inline">Create folder</span>
           </button>
         </header>
 
@@ -238,7 +239,7 @@ export function Notes() {
             </div>
           )}
         </div>
-      </main>
+      </section>
 
       {/* =================================================================== */}
       {/* CREATE / RENAME DIALOG                                              */}

@@ -70,13 +70,15 @@ export default function Overview() {
   const loading = !data
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="workspace-overview">
       <div className="flex w-full flex-col gap-[clamp(1rem,3vw,1.75rem)]">
-        <header className="flex w-full flex-wrap items-start justify-between gap-4">
+        <header className="workspace-overview-header flex w-full flex-wrap items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <p className="workspace-eyebrow">Your workspace at a glance</p>
             <h1 className="text-heading-3 text-primary text-balance !font-inter">
               {getGreeting(user?.firstName || "there")}
             </h1>
+            <p className="workspace-subtitle">A clear view of your focus, tasks, and progress.</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -158,6 +160,6 @@ export default function Overview() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   )
 }

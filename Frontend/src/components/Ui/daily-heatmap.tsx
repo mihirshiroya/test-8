@@ -121,7 +121,7 @@ export function DailyHeatmap({
 
   return (
     <section
-      className="flex h-full min-h-0 flex-col border border-soft p-6 animate-fadeIn"
+      className="workspace-panel flex h-full min-h-0 flex-col"
       aria-labelledby="daily-heatmap-title"
     >
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">

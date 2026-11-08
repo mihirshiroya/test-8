@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './dropdown-menu'
 import {
@@ -39,7 +38,7 @@ export function FolderCard({
   }
 
   return (
-    <article className="group relative gap-y-5 flex flex-col border border-soft p-4 transition-all hover:shadow-[0_8px_24px_-8px_rgba(15,15,15,0.16)]">
+    <article className="workspace-folder group relative flex flex-col gap-y-4 p-5">
       <div className="flex items-start justify-between">
         <span
           className="flex size-10 items-center justify-center"

@@ -70,7 +70,7 @@ export function CustomSelect<T extends string>({ value, options, onChange, label
         aria-activedescendant={open ? `${listId}-${activeIndex}` : undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onKeyDown}
-        className={`flex h-9 w-full items-center justify-between gap-2 border border-soft bg-background px-3 text-left text-sm text-foreground outline-none transition hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring ${open ? "ring-2 ring-ring" : ""} ${className ?? ""}`}
+        className={`kumo-select-trigger ${className ?? ""}`}
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected?.color && (
@@ -78,7 +78,7 @@ export function CustomSelect<T extends string>({ value, options, onChange, label
           )}
           <span className="truncate">{selected?.label}</span>
         </span>
-        <ChevronDown size={16} aria-hidden className={`shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} aria-hidden className={`shrink-0 text-steel transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       <AnchoredPopover open={open} anchorRef={triggerRef} onClose={close} matchWidth className="p-1">
@@ -95,7 +95,8 @@ export function CustomSelect<T extends string>({ value, options, onChange, label
                 onPointerEnter={() => setActiveIndex(index)}
                 onPointerDown={(e) => e.preventDefault()}
                 onClick={() => choose(index)}
-                className={`flex cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm transition-colors ${isActive ? "bg-muted" : ""}`}
+                data-active={isActive}
+                className="kumo-select-option cursor-pointer"
               >
                 {option.color && (
                   <span

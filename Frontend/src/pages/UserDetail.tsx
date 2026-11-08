@@ -216,7 +216,7 @@ const UserDetail: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
               <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${
-                currentUser.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                currentUser.role === 'ADMIN' ? 'bg-[var(--color-primary-soft)] text-[var(--color-nav-active-text)]' : 'bg-gray-100 text-gray-800'
               }`}>
                 {currentUser.role}
               </span>
@@ -304,7 +304,7 @@ const UserDetail: React.FC = () => {
             {!isOwnAccount && currentUser.role !== 'ADMIN' && (
               <button
                 onClick={() => handleRoleChange('ADMIN')}
-                className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                className="kumo-button kumo-button--primary w-full gap-2"
               >
                 <Shield className="h-5 w-5" />
                 Promote to Admin

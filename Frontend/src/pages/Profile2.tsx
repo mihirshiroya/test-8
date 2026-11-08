@@ -220,7 +220,7 @@ function ProductivityCard({
               >
                 {d.completed > 0 ? (
                   <div
-                    className={`relative w-full max-w-8 overflow-hidden rounded-t-[5px] bg-gradient-to-t from-primary/80 via-primary to-indigo-400 shadow-sm transition-all duration-500 ${
+                    className={`relative w-full max-w-8 overflow-hidden rounded-t-[5px] bg-primary transition-all duration-500 ${
                       active ? 'opacity-100 brightness-110 shadow-md' : 'opacity-95'
                     }`}
                     style={{ height: `${Math.max(4, (d.completed / max) * 100)}%` }}
@@ -232,7 +232,7 @@ function ProductivityCard({
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-white/40" />
                   </div>
                 ) : (
-                  <div className="h-1 w-full max-w-8 rounded-t-[5px] bg-gradient-to-t from-zinc-700/30 via-zinc-500/25 to-zinc-300/35" />
+                  <div className="h-1 w-full max-w-8 rounded-t-[5px] bg-surface" />
                 )}
 
                 {active && (

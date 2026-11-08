@@ -26,6 +26,7 @@ import {
 import { store, persistor } from './store';
 
 import Layout from './components/Layout/Layout';
+import { WorkspaceAppearance } from './components/Layout/WorkspaceAppearance';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -153,6 +154,7 @@ const AppNotch: React.FC = () => {
 const AppContent: React.FC = () => {
   return (
     <Router>
+      <WorkspaceAppearance />
       <div className="App min-h-screen w-full">
 
         <DesktopBridge />

@@ -27,7 +27,7 @@ export function CalendarHeader({
   onToday: () => void
 }) {
   return (
-    <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+    <div className="workspace-page-heading flex flex-wrap items-center justify-between gap-3">
       <h1 className="shrink-0 text-heading-3 text-primary text-balance !font-inter">{title}</h1>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -44,7 +44,7 @@ export function CalendarHeader({
           />
         </div>
 
-        <div className="flex items-center overflow-hidden border border-soft">
+        <div className="flex items-center overflow-hidden rounded-md border border-soft bg-canvas">
           <button
             type="button"
             onClick={onPrev}

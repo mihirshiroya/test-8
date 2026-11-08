@@ -246,14 +246,7 @@ export const TaskCard = memo(function TaskCard({
 
   return (
     <article
-      className={[
-        "group",
-        "bg-[var(--color-background)]",
-        "p-3.5",
-        "shadow-sm transition-shadow",
-        "hover:shadow-(--shadow-card)",
-        ""
-      ].join(" ")}
+      className="kumo-task-card group p-3.5"
     >
       {/* Header */}
       {/* Task content */}
@@ -286,7 +279,7 @@ export const TaskCard = memo(function TaskCard({
       className={[
         "inline-flex items-center justify-center",
         "shrink-0 px-2 py-1",
-        "text-[7px] font-semibold uppercase tracking-wide",
+        "rounded text-[10px] font-medium uppercase tracking-wide",
         priorityClass,
       ].join(" ")}
     >

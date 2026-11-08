@@ -67,8 +67,8 @@ const CATEGORY_STYLES: Record<
   },
   deadline: {
     icon: CalendarClock,
-    badge: "group-hover:border-purple-500/40 group-hover:bg-purple-500/10",
-    iconColor: "group-hover:text-purple-500",
+    badge: "group-hover:border-[var(--color-primary-line)] group-hover:bg-[var(--color-primary-soft)]",
+    iconColor: "group-hover:text-[var(--color-primary-deep)]",
   },
   updated: {
     icon: Pencil,
@@ -105,7 +105,7 @@ export function RecentActivity({
       className={
         isPanel
           ? "animate-fadeIn flex h-full flex-col"
-          : "border border-soft animate-fadeIn flex h-full flex-col p-6"
+          : "workspace-panel flex h-full flex-col"
       }
     >
       {!isPanel && <h3 className="text-heading-5 text-primary">Recent activity</h3>}

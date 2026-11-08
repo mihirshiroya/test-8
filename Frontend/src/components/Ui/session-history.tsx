@@ -150,7 +150,7 @@ export function SessionHistory() {
   return (
     <div className="mx-auto w-full">
       {/* Header */}
-      <header className="mb-8 flex items-center justify-between gap-3">
+      <header className="workspace-page-heading flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold tracking-tight font-inter! text-foreground text-balance">
           Session Log
         </h1>
@@ -224,7 +224,7 @@ export function SessionHistory() {
 
       {/* Progress */}
       {/* Progress */}
-<section className="mb-10 border border-soft bg-card p-6">
+<section className="workspace-panel mb-6">
   <div className="mb-4 flex items-center justify-between gap-4">
     <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
       Progress
@@ -258,7 +258,7 @@ export function SessionHistory() {
 </section>
 
       {/* Timeline chart panel */}
-      <section className="mb-10 border border-soft bg-card p-6">
+      <section className="workspace-panel mb-6">
         <div className="mb-6 flex items-center justify-between mb-4">
           <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
             Timeline
@@ -278,7 +278,7 @@ export function SessionHistory() {
       {/* Two-column layout */}
       <div className="grid grid-cols-1 gap-4 lg:h-[500px] lg:grid-cols-2">
         {/* Sessions */}
-        <section className="min-h-0 overflow-y-auto border border-soft bg-card p-6 no-scrollbar">
+        <section className="workspace-panel min-h-0 overflow-y-auto no-scrollbar">
           <h2 className="text-md font-semibold capitalize tracking-wider text-foreground mb-4">
             Sessions
           </h2>
@@ -320,7 +320,7 @@ export function SessionHistory() {
         </section>
 
         {/* By task */}
-        <section className="min-h-0 overflow-y-auto border border-soft bg-card p-6 no-scrollbar">
+        <section className="workspace-panel min-h-0 overflow-y-auto no-scrollbar">
           <h2 className="mb-4 text-md font-semibold capitalize tracking-wider text-foreground">
             By Task
           </h2>
@@ -613,7 +613,7 @@ function StatCard({
   hint?: string
 }) {
   return (
-    <div className="animate-fadeIn border border-soft bg-background p-5 transition-shadow hover:shadow-(--shadow-card)">
+    <div className="workspace-metric">
       <div className="flex items-center justify-between gap-3">
         <span className="text-xl 
             transition-colors
@@ -621,7 +621,7 @@ function StatCard({
           {label}
         </span>
 
-        <span className="grid h-9 w-9 place-items-center rounded-notion text-steel">
+        <span className="workspace-metric-icon">
           <Icon className="size-4.5" />
         </span>
       </div>

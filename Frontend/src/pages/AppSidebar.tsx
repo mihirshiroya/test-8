@@ -22,14 +22,13 @@ import {
   Trash2,
   X,
   LogOut,
+  Layers3,
 } from 'lucide-react'
 import { cn } from '../lib/utills'
 import { IS_DESKTOP } from '../lib/api-origin'
 import { WindowTrafficLights } from '../desktop/DesktopTitleBar'
 import ThemeSwitcher from './ThemeSwitcher'
-import { DottedText } from '../components/Ui/dotted-text'
 import noResultsRaw from '../assets/31-no-results.svg?raw'
-import logo from '../assets/logo.png'
 import { ThemedSvg } from '../lib/svg-theme'
 import {
   ProjectDialog,
@@ -86,7 +85,7 @@ const folders = [
 const outletItems = [
   { label: 'Overview', path: '/overview', icon: Home },
   { label: 'Notes', path: '/Notes', icon: FolderOpen },
-  { label: 'Calender', path: '/Calender', icon: CalendarDays },
+  { label: 'Calendar', path: '/Calender', icon: CalendarDays },
   { label: 'Session', path: '/session', icon: Grid2X2 },
   { label: 'Kanban', path: '/kanban', icon: KanbanSquare },
 ]
@@ -259,12 +258,12 @@ function AppSidebar() {
   /* Navigation classes                                                       */
   /* ------------------------------------------------------------------------ */
 
-  const hideWhenCollapsed = collapsed ? 'lg:hidden' : ''
+  const hideWhenCollapsed = collapsed ? 'md:hidden' : ''
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       'group flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium my-1 transition-colors',
-      collapsed && 'lg:justify-center lg:px-0',
+      collapsed && 'md:justify-center md:px-0',
       isActive
         ? 'bg-[var(--color-nav-active-bg)] font-semibold text-[var(--color-nav-active-text)]'
         : 'hover:bg-[var(--color-nav-hover-bg)] hover:text-[var(--color-nav-hover-text)] text-secondary',
@@ -400,7 +399,7 @@ function AppSidebar() {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <div className="min-h-screen bg-sidebar text-foreground">
+    <div className="workspace-shell min-h-screen bg-sidebar text-foreground">
 
       <div
         className={cn(
@@ -416,7 +415,7 @@ function AppSidebar() {
 
         <aside
           className={cn(
-            'group/sidebar fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
+            'workspace-sidebar group/sidebar fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
             'transition-transform duration-300 ease-in-out',
             mobileOpen ? 'translate-x-0' : '-translate-x-full',
             'md:relative md:inset-auto md:z-auto md:h-full md:min-h-0 md:w-full md:max-w-none md:translate-x-0',
@@ -444,10 +443,12 @@ function AppSidebar() {
                 )}
                 aria-label="Consistent home"
               >
-                <img src={logo} alt="" className="size-7 shrink-0" />
+                <span className="workspace-brand-mark" aria-hidden="true">
+                  <Layers3 className="size-[19px]" strokeWidth={1.8} />
+                </span>
                 <h3
                   className={cn(
-                    'truncate font-extrabold text-2xl text-primary',
+                    'workspace-brand truncate',
                     collapsed && 'md:hidden',
                   )}
                 >
@@ -497,6 +498,7 @@ function AppSidebar() {
             className="flex-1 overflow-y-auto px-3 py-2 no-scrollbar"
             aria-label="Main navigation"
           >
+            <p className={cn('workspace-nav-label', collapsed && 'md:hidden')}>Workspace</p>
             {/* Main navigation */}
             <ul className="mb-4 flex flex-col gap-0.5">
               {collapsed && (
@@ -531,7 +533,7 @@ function AppSidebar() {
               ))}
             </ul>
 
-            <div className="border-[0.5px] border-soft border-dotted" />
+            <div className="mx-2 border-t border-soft" />
 
             {/* Workspaces header */}
             <div
@@ -541,7 +543,7 @@ function AppSidebar() {
               )}
             >
               <span
-                className={cn('text-sm font-semibold tracking-wide', collapsed && 'md:hidden')}
+                className={cn('text-[10px] font-semibold uppercase tracking-[.09em] text-steel', collapsed && 'md:hidden')}
               >
                 Workspaces
               </span>
@@ -658,7 +660,7 @@ function AppSidebar() {
         {/* ================================================================== */}
 
         <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
-          <header data-tauri-drag-region className="flex h-16 shrink-0 items-center justify-between border-b border-soft border-border px-5 sm:px-8">
+          <header data-tauri-drag-region className="workspace-header flex h-16 shrink-0 items-center justify-between gap-3 border-b border-soft px-4 sm:px-7">
             {/* Left */}
             <div className="flex items-center gap-3">
               <button
@@ -728,7 +730,7 @@ function AppSidebar() {
             </div>
           </header>
 
-          <main className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-8">
+          <main id="workspace-content" className="workspace-content min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">
             <Outlet />
           </main>
         </div>

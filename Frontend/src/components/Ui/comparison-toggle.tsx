@@ -13,27 +13,19 @@ export function ComparisonToggle({
   onChange: (mode: ComparisonMode) => void
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Comparison period"
-      className="inline-flex items-center gap-1 rounded-notion-full border border-color p-1"
-    >
-      {OPTIONS.map((opt) => {
-        const active = mode === opt.value
-        return (
-          <button
-            key={opt.value}
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(opt.value)}
-            className={`rounded-notion-full px-3.5 py-1.5 text-body-sm-medium transition-colors ${
-              active ? "bg-primary text-primary shadow-[var(--shadow-subtle)]" : "text-steel hover:text-primary"
-            }`}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
+    <div role="tablist" aria-label="Comparison period" className="kumo-segmented">
+      {OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          role="tab"
+          aria-selected={mode === opt.value}
+          onClick={() => onChange(opt.value)}
+          className="kumo-segmented-item"
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   )
 }

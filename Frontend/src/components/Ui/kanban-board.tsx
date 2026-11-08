@@ -622,7 +622,7 @@ export function KanbanBoard({
       {/* Kanban Header / Toolbar                                                 */}
       {/* ---------------------------------------------------------------------- */}
 
-      <div className="mb-5 flex w-full items-center gap-3">
+      <div className="workspace-toolbar workspace-page-heading flex w-full items-center gap-3">
         {title && (
           <h2 className="shrink-0 text-xl font-inter! capitalize font-bold tracking-tight text-foreground sm:text-2xl">
             {title}
@@ -668,7 +668,8 @@ export function KanbanBoard({
           </div>
 
          {/* Period Selector */}
-<div className="w-[140px] shrink-0">
+<div className="w-[110px] shrink-0">
+  <span id="kanban-period-label" className="sr-only">Task period</span>
   <CustomSelect
     value={period}
     options={PERIOD_OPTIONS}
@@ -845,31 +846,23 @@ const KanbanColumn = memo(
   }: KanbanColumnProps) {
     return (
       <div
-        className="
-          flex
-          h-[calc(100vh-220px)]
-          min-h-[500px]
-          min-w-0
-          flex-col
-          gap-3
-        "
+        className="kumo-board-column h-[calc(100vh-220px)] min-h-[500px] min-w-0"
       >
     
 {/* Column header */}
-<div
-  className="flex shrink-0 items-center gap-2 border-l-[3px] px-3 py-2"
-  style={{
-    borderColor: meta.accent,
-    backgroundColor: `color-mix(in srgb, ${meta.accent} 12%, transparent)`,
-  }}
->
+<div className="kumo-board-column-header shrink-0">
+  <span
+    aria-hidden="true"
+    className="size-2 shrink-0 rounded-full"
+    style={{ backgroundColor: meta.accent }}
+  />
   {/* Title first */}
-  <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+  <span className="kumo-board-column-title min-w-0 truncate">
     {meta.title}
   </span>
 
   {/* Count after title */}
-  <span className="shrink-0 rounded-full bg-card px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+  <span className="kumo-board-count shrink-0">
     {tasks.length}
   </span>
 

@@ -46,8 +46,8 @@ const AdminDashboard: React.FC = () => {
       title: 'Verified Users',
       value: stats.verifiedUsers,
       icon: UserCheck,
-      color: 'bg-purple-500',
-      textColor: 'text-purple-600'
+      color: 'bg-[var(--color-primary)]',
+      textColor: 'text-[var(--color-nav-active-text)]'
     },
     {
       title: 'Recent Users (7d)',
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC = () => {
                 <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      item.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                      item.role === 'ADMIN' ? 'bg-[var(--color-primary-soft)] text-[var(--color-nav-active-text)]' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {item.role}
                     </span>

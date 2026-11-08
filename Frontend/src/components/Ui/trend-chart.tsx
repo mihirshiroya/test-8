@@ -32,24 +32,16 @@ export function TrendChart({
 
   const hasFocusTime = data.some((d) => d.current > 0 || d.previous > 0)
   const max = Math.max(...data.flatMap((d) => [d.current, d.previous]), 1)
-  const currentTotal = data.reduce((s, d) => s + d.current, 0)
-  const prevTotal = data.reduce((s, d) => s + d.previous, 0)
-
-  const delta =
-    prevTotal === 0
-      ? 0
-      : Math.round(((currentTotal - prevTotal) / prevTotal) * 100)
-
   const currentLabel = mode === "today" ? "Today" : "This week"
   const prevLabel = mode === "today" ? "Yesterday" : "Last week"
 
   return (
-    <div className="border-2 border-soft animate-fadeIn min-h-[420px] grid h-full grid-rows-[auto_1fr] p-6">
+    <div className="workspace-panel min-h-[360px] grid h-full grid-rows-[auto_1fr]">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-lg text-primary font-semibold">
+            <span className="text-sm text-primary font-semibold">
               Focus time trends
             </span>
           </div>
@@ -58,12 +50,12 @@ export function TrendChart({
         {hasFocusTime && (
           <div className="flex items-center gap-4">
             <Legend
-              gradientClass="bg-gradient-to-t from-primary/80 via-primary to-indigo-400"
+              gradientClass="bg-primary"
               label={currentLabel}
             />
 
             <Legend
-              gradientClass="bg-gradient-to-t from-zinc-600/30 via-zinc-400/30 to-zinc-200/40"
+              gradientClass="bg-surface"
               label={prevLabel}
               outline
             />
@@ -108,7 +100,7 @@ export function TrendChart({
                 <div className="flex min-h-0 flex-1 items-end justify-center gap-1.5">
                   {/* Previous Period Bar (Muted Grainy Gradient) */}
                   <div
-                    className="relative w-1/2 max-w-8 overflow-hidden rounded-t-[5px] bg-gradient-to-t from-zinc-700/30 via-zinc-500/25 to-zinc-300/35 transition-all duration-500 shadow-sm"
+                    className="relative w-1/2 max-w-8 overflow-hidden rounded-t-[5px] bg-surface transition-all duration-500 shadow-sm"
                     style={{
                       height: `${(d.previous / max) * 100}%`,
                     }}
@@ -124,7 +116,7 @@ export function TrendChart({
 
                   {/* Current Period Bar (Vibrant Grainy Gradient) */}
                   <div
-                    className={`relative w-1/2 max-w-8 overflow-hidden rounded-t-[5px] bg-gradient-to-t from-primary/80 via-primary to-indigo-400 transition-all duration-500 shadow-sm ${
+                    className={`relative w-1/2 max-w-8 overflow-hidden rounded-t-[5px] bg-primary transition-all duration-500 shadow-sm ${
                       active
                         ? "opacity-100 brightness-110 shadow-md"
                         : "opacity-95 hover:opacity-100"
