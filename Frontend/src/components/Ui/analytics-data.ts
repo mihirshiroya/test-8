@@ -36,6 +36,12 @@ export type HeatCell = {
   completed?: number
 }
 
+export type HourlyHeatCell = {
+  date: string
+  hour: number
+  minutes: number
+}
+
 export type AnalyticsData = {
   generatedAt: number
   metrics: Metric[]
@@ -43,6 +49,7 @@ export type AnalyticsData = {
   daySeries: SeriesPoint[]
   activity: Activity[]
   heatmap: HeatCell[]
+  hourlyHeatmap?: HourlyHeatCell[]
 }
 
 export type SessionEntry = {

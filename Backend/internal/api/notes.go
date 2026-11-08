@@ -696,6 +696,22 @@ func scanContent(row pgx.Row) (contentJSON, error) {
 	return c, err
 }
 
+func ensureNoMarkdown(ctx context.Context, tx pgx.Tx, subtopicID string) error {
+	// Serialize creation and conversion per section so concurrent requests cannot add two documents.
+	var id string
+	if err := tx.QueryRow(ctx, `SELECT id FROM subtopics WHERE id = $1 FOR UPDATE`, subtopicID).Scan(&id); err != nil {
+		return err
+	}
+	var exists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM contents WHERE "subtopicId" = $1 AND type = 'text' AND language = 'markdown')`, subtopicID).Scan(&exists); err != nil {
+		return err
+	}
+	if exists {
+		return errMarkdownExists
+	}
+	return nil
+}
+
 // POST /api/notes/subtopics/{subtopicId}/content   body: { title?, type, content, language? }
 func (s *Server) addContent(w http.ResponseWriter, r *http.Request) {
 	const label, msg = "Add content", "Failed to add content"
@@ -716,17 +732,29 @@ func (s *Server) addContent(w http.ResponseWriter, r *http.Request) {
 		httpx.Fail(w, http.StatusNotFound, "Subtopic not found")
 		return
 	}
-	pos, err := nextChildPosition(ctx, s.db, "contents", "subtopicId", subtopicID)
+	var created contentJSON
+	err = database.InTx(ctx, s.db, func(tx pgx.Tx) error {
+		if content.Type == "text" && content.Language == "markdown" {
+			if err := ensureNoMarkdown(ctx, tx, subtopicID); err != nil {
+				return err
+			}
+		}
+		pos, err := nextChildPosition(ctx, tx, "contents", "subtopicId", subtopicID)
+		if err != nil {
+			return err
+		}
+		created, err = scanContent(tx.QueryRow(ctx, `INSERT INTO contents
+			(id, "subtopicId", title, type, content, language, position, "createdAt", "updatedAt")
+			VALUES ($1, $2, $3, $4::text::"ContentType", $5, $6, $7, $8, $8)`+contentReturning,
+			newID(), subtopicID, content.Title, content.Type, content.Content,
+			nullIfEmpty(content.Language), pos, compat.Now()))
+		return err
+	})
 	if err != nil {
-		s.serverError(w, label, err, msg)
-		return
-	}
-	created, err := scanContent(s.db.QueryRow(ctx, `INSERT INTO contents
-		(id, "subtopicId", title, type, content, language, position, "createdAt", "updatedAt")
-		VALUES ($1, $2, $3, $4::text::"ContentType", $5, $6, $7, $8, $8)`+contentReturning,
-		newID(), subtopicID, content.Title, content.Type, content.Content,
-		nullIfEmpty(content.Language), pos, compat.Now()))
-	if err != nil {
+		if err == errMarkdownExists {
+			httpx.Fail(w, http.StatusConflict, err.Error())
+			return
+		}
 		s.serverError(w, label, err, msg)
 		return
 	}
@@ -762,9 +790,27 @@ func (s *Server) updateContent(w http.ResponseWriter, r *http.Request) {
 		httpx.Fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	updated, err := scanContent(s.db.QueryRow(ctx, `UPDATE contents SET title = $2, type = $3::text::"ContentType", content = $4, language = $5, "updatedAt" = $6 WHERE id = $1`+contentReturning,
-		contentID, content.Title, content.Type, content.Content, nullIfEmpty(content.Language), compat.Now()))
+	var updated contentJSON
+	err = database.InTx(ctx, s.db, func(tx pgx.Tx) error {
+		if content.Type == "text" && content.Language == "markdown" && (current.Type != "text" || current.Language != "markdown") {
+			var subtopicID string
+			if err := tx.QueryRow(ctx, `SELECT "subtopicId" FROM contents WHERE id = $1`, contentID).Scan(&subtopicID); err != nil {
+				return err
+			}
+			if err := ensureNoMarkdown(ctx, tx, subtopicID); err != nil {
+				return err
+			}
+		}
+		var err error
+		updated, err = scanContent(tx.QueryRow(ctx, `UPDATE contents SET title = $2, type = $3::text::"ContentType", content = $4, language = $5, "updatedAt" = $6 WHERE id = $1`+contentReturning,
+			contentID, content.Title, content.Type, content.Content, nullIfEmpty(content.Language), compat.Now()))
+		return err
+	})
 	if err != nil {
+		if err == errMarkdownExists {
+			httpx.Fail(w, http.StatusConflict, err.Error())
+			return
+		}
 		s.serverError(w, label, err, msg)
 		return
 	}

@@ -21,6 +21,17 @@ func TestIntegrationNotesMarkdown(t *testing.T) {
 	subtopics := dig(topics[0], "subtopics").([]any)
 	blocks := dig(subtopics[0], "content").([]any)
 	contentID := str(blocks[0], "id")
+	subtopicID := str(subtopics[0], "id")
+	h.expect(h.do("POST", "/api/notes/subtopics/"+subtopicID+"/content", alice, map[string]any{
+		"type": "text", "language": "markdown", "content": "# Duplicate",
+	}), http.StatusConflict, "reject second Markdown document")
+	legacy := h.expect(h.do("POST", "/api/notes/subtopics/"+subtopicID+"/content", alice, map[string]any{
+		"type": "code", "language": "go", "title": "Legacy block", "content": "fmt.Println(42)",
+	}), http.StatusCreated, "retain legacy code support")
+	legacyID := str(legacy.body, "data", "content", "id")
+	h.expect(h.do("PATCH", "/api/notes/content/"+legacyID, alice, map[string]any{
+		"type": "text", "language": "markdown", "content": "# Duplicate conversion",
+	}), http.StatusConflict, "reject second Markdown by conversion")
 	if str(blocks[0], "title") != "Imported document" || str(blocks[0], "content") != source {
 		t.Fatalf("Markdown source or derived title changed: %s", created.raw)
 	}

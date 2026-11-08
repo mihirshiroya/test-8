@@ -1,4 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DocsSearchDialog } from '../components/Ui/docs-search-dialog'
+import { useDocsToc } from '../hooks/use-docs-toc'
+import type { SearchResult } from '../lib/docs-search'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '../store'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
@@ -15,9 +18,7 @@ import {
   ChevronRight,
   FileText,
   Plus,
-  Search,
   Trash2,
-  X,
   Pencil,
   ArrowRight,
   ArrowLeft,
@@ -48,8 +49,6 @@ import { toast } from '../lib/toast'
 const LINE = 'border-docs-line'
 const MUTED = 'text-docs-muted'
 const INK = 'text-docs-ink'
-const PAPER = 'bg-docs-paper'
-const SOFT = 'bg-docs-soft'
 const ACTIVE = 'bg-docs-active'
 const ACCENT = 'text-docs-accent'
 const HOVER_ACTIVE = 'hover:bg-docs-active'
@@ -208,8 +207,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   const [structureBusy, setStructureBusy] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTocId, setActiveTocId] = useState<string | null>(null)
+  const [pendingSearch, setPendingSearch] = useState<SearchResult | null>(null)
 
   // ---------------------------------------------------------------------------
   // Keep selection valid when Redux document changes
@@ -270,43 +268,21 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   const topic = doc.topics.find((item) => item.id === topicId) ?? doc.topics[0]
   const subtopic =
     topic?.subtopics.find((item) => item.id === subtopicId) ?? topic?.subtopics[0]
-  const toc = subtopic?.content ?? []
+  const { toc, activeTocId, setActiveTocId } = useDocsToc(mainScrollRef, subtopic?.content)
 
   // ---------------------------------------------------------------------------
   // Reset active TOC + scroll when subtopic changes
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    setActiveTocId(toc[0]?.id ?? null)
-    requestAnimationFrame(() => {
-      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
-    })
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
   }, [subtopic?.id])
 
   // ---------------------------------------------------------------------------
   // Scroll-based active TOC tracking
   // ---------------------------------------------------------------------------
 
-  const handleMainScroll = () => {
-    const container = mainScrollRef.current
-    if (!container || !toc.length) return
 
-    const containerRect = container.getBoundingClientRect()
-    const activationOffset = 100
-    let currentId = toc[0]?.id ?? null
-
-    for (const item of toc) {
-      const element = document.getElementById(`content-${item.id}`)
-      if (!element) continue
-
-      const relativeTop = element.getBoundingClientRect().top - containerRect.top
-      if (relativeTop <= activationOffset) {
-        currentId = item.id
-      }
-    }
-
-    setActiveTocId((previous) => (previous === currentId ? previous : currentId))
-  }
 
   // ---------------------------------------------------------------------------
   // Previous / next
@@ -339,11 +315,11 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   const closeComposer = () => { setComposer(null); setDraftDirty(false); setDraftBusy(false) }
   const openComposer = (initial?: Content) => {
     if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft?'))) return
-    setComposer({ initial, key: createId() })
+    setComposer({ initial: initial ?? subtopic?.content.find(isMarkdownContent), key: createId() })
     setDraftDirty(false)
   }
   const select = (nextTopic: Topic, nextSubtopic?: Subtopic) => {
-    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft before switching sections?'))) return
+    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft before switching sections?'))) return false
     closeComposer()
     const targetSubtopic = nextSubtopic ?? nextTopic.subtopics[0]
 
@@ -351,25 +327,24 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     setSubtopicId(targetSubtopic?.id ?? '')
     setExpanded((previous) => ({ ...previous, [nextTopic.id]: true }))
     setMobileOpen(false)
-    setActiveTocId(targetSubtopic?.content?.[0]?.id ?? null)
+    setActiveTocId(null)
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
 
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', `#${targetSubtopic?.id ?? nextTopic.id}`)
     }
 
-    requestAnimationFrame(() => {
-      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-    })
+    return true
   }
 
   // ---------------------------------------------------------------------------
   // Scroll to content section
   // ---------------------------------------------------------------------------
 
-  const scrollTo = (id: string) => {
+  const scrollTo = useCallback((id: string) => {
     const container = mainScrollRef.current
-    const element = document.getElementById(`content-${id}`)
-    if (!container || !element) return
+    const element = document.getElementById(id)
+    if (!container || !element || !container.contains(element)) return
 
     setActiveTocId(id)
 
@@ -378,8 +353,28 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     const headerOffset = 24
     const targetTop = container.scrollTop + (elementRect.top - containerRect.top) - headerOffset
 
-    container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
-    window.history.replaceState(null, '', `#content-${id}`)
+    container.scrollTo({ top: Math.max(0, targetTop), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+    window.history.replaceState(null, '', `#${id}`)
+    element.setAttribute('tabindex', '-1')
+    element.focus({ preventScroll: true })
+  }, [setActiveTocId])
+
+  useEffect(() => {
+    if (!pendingSearch || subtopic?.id !== pendingSearch.subtopic.id || topic?.id !== pendingSearch.topic.id) return
+    if (pendingSearch.anchorId) scrollTo(pendingSearch.anchorId)
+    else {
+      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
+      const heading = mainScrollRef.current?.querySelector('h1')
+      heading?.setAttribute('tabindex', '-1')
+      heading?.focus({ preventScroll: true })
+    }
+    setPendingSearch(null)
+  }, [pendingSearch, subtopic?.id, topic?.id, scrollTo])
+
+  const openSearchResult = (result: SearchResult) => {
+    if (!select(result.topic, result.subtopic)) return
+    setSearchOpen(false)
+    setPendingSearch(result)
   }
 
   // ---------------------------------------------------------------------------
@@ -519,34 +514,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // Search
   // ---------------------------------------------------------------------------
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return []
 
-    const query = searchQuery.toLowerCase()
-    const results: { topic: Topic; subtopic: Subtopic; contentItem?: Content }[] = []
-
-    doc.topics.forEach((currentTopic) => {
-      currentTopic.subtopics.forEach((currentSubtopic) => {
-        if (
-          currentSubtopic.title.toLowerCase().includes(query) ||
-          currentSubtopic.description?.toLowerCase().includes(query)
-        ) {
-          results.push({ topic: currentTopic, subtopic: currentSubtopic })
-        }
-
-        currentSubtopic.content.forEach((contentItem) => {
-          if (
-            contentItem.title.toLowerCase().includes(query) ||
-            contentItem.content.toLowerCase().includes(query)
-          ) {
-            results.push({ topic: currentTopic, subtopic: currentSubtopic, contentItem })
-          }
-        })
-      })
-    })
-
-    return results
-  }, [searchQuery, doc])
 
   // ---------------------------------------------------------------------------
   // Code placeholder (based on the folder NAME)
@@ -681,7 +649,6 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
         {/* MAIN DOCUMENT SCROLL CONTAINER */}
         <main
           ref={mainScrollRef}
-          onScroll={handleMainScroll}
           className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar bg-background"
         >
           <div className="mx-auto w-full max-w-[900px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
@@ -730,8 +697,8 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                   <button
                     type="button"
                     onClick={() => openComposer()}
-                    disabled={!subtopic}
-                    title="Add content"
+                    disabled={!subtopic || draftBusy}
+                    title={subtopic?.content.some(isMarkdownContent) ? 'Continue editing the existing Markdown document' : 'Create the Markdown document for this section'}
                     className={`inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border px-2.5 py-2 text-[11px] font-medium transition-colors hover:border-docs-accent disabled:cursor-not-allowed disabled:opacity-45 ${ACTIVE} ${ACCENT} ${LINE} ${FOCUS}`}
                   >
                     <Plus className="size-3.5" /> Add content
@@ -845,7 +812,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
         {/* RIGHT TOC */}
         <aside
           aria-label="On this page"
-          className="hidden w-[200px] shrink-0 overflow-y-auto py-9 pl-0 pr-6 min-[1100px]:block"
+          className="hidden w-[180px] shrink-0 overflow-y-auto py-9 pl-0 pr-4 min-[960px]:block min-[1100px]:w-[200px] min-[1100px]:pr-6"
         >
           <div>
             <h2 className={`mb-[18px] flex items-center gap-[7px] text-[13px] font-semibold ${MUTED}`}>
@@ -880,7 +847,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
                 variant="sections"
                 size="sm"
                 title="No sections yet"
-                description="Add a content block to build this outline."
+                description="Add headings to your Markdown document to build this outline."
               />
             )}
           </div>
@@ -898,98 +865,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       )}
 
       {/* SEARCH MODAL */}
-      {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 backdrop-blur-xs animate-in fade-in duration-150">
-          <div
-            className={`w-full max-w-xl overflow-hidden border shadow-2xl animate-in zoom-in-95 duration-150 ${PAPER} ${LINE}`}
-          >
-            <div className={`flex items-center border-b px-4 py-3 ${SOFT} ${LINE}`}>
-              <Search className={`mr-3 size-5 ${MUTED}`} />
-
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={`Search ${meta.label} docs...`}
-                className={`flex-1 bg-transparent text-sm outline-none placeholder:text-docs-muted ${INK}`}
-              />
-
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                aria-label="Close search"
-                className={`rounded-md p-1 transition-colors hover:text-docs-ink ${MUTED} ${HOVER_ACTIVE} ${FOCUS}`}
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="max-h-80 overflow-y-auto p-3">
-              {searchResults.length > 0 ? (
-                <div className="space-y-1">
-                  {searchResults.map((result, index) => (
-                    <button
-                      key={`${result.topic.id}-${result.subtopic.id}-${result.contentItem?.id ?? index}`}
-                      type="button"
-                      onClick={() => {
-                        select(result.topic, result.subtopic)
-
-                        if (result.contentItem) {
-                          window.setTimeout(() => scrollTo(result.contentItem!.id), 150)
-                        }
-
-                        setSearchOpen(false)
-                        setSearchQuery('')
-                      }}
-                      className={`group flex w-full items-center justify-between p-3 text-left transition-colors ${HOVER_ACTIVE} ${FOCUS}`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-semibold ${ACCENT}`}>
-                            {result.topic.title}
-                          </span>
-                          <span className={MUTED}>/</span>
-                          <span className={`text-xs font-medium ${INK}`}>
-                            {result.subtopic.title}
-                          </span>
-                        </div>
-
-                        {result.contentItem && (
-                          <div className={`mt-1 truncate text-xs ${MUTED}`}>
-                            <span className={`font-semibold ${INK} opacity-80`}>
-                              {result.contentItem.title}:
-                            </span>{' '}
-                            {result.contentItem.content.slice(0, 80)}
-                            ...
-                          </div>
-                        )}
-                      </div>
-
-                      <ChevronRight
-                        className={`ml-2 size-4 shrink-0 transition-colors group-hover:text-docs-accent ${MUTED}`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              ) : searchQuery.trim() ? (
-                <DocsEmptyState
-                  variant="noResults"
-                  size="sm"
-                  title={<>No results for &ldquo;{searchQuery}&rdquo;</>}
-                  description={`Nothing matched in ${meta.label} docs. Try a different keyword.`}
-                />
-              ) : (
-                <DocsEmptyState
-                  variant="search"
-                  size="sm"
-                  title="Search the docs"
-                  description={`Type to search through ${meta.label} documentation.`}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {searchOpen && <DocsSearchDialog doc={doc} name={meta.label} onClose={() => setSearchOpen(false)} onNavigate={openSearchResult} />}
 
       {/* DELETE MODAL */}
       <AppDialog

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
-import { RefreshCw } from "lucide-react"
 
 import type { ComparisonMode } from "../components/Ui/analytics-data"
 import { useAppDispatch, useAppSelector } from "../store"
@@ -12,6 +11,7 @@ import { CustomSelect, type SelectOption } from "../components/Ui/custom-select"
 import { StatCard } from "../components/Ui/stat-card"
 import { TrendChart } from "../components/Ui/trend-chart"
 import { WeeklyHeatmap } from "../components/Ui/weekly-heatmap"
+import { DailyHeatmap } from "../components/Ui/daily-heatmap"
 import { TodaysTasks } from "../components/Ui/todays-tasks"
 import { RecentActivity } from "../components/Ui/recent-activity"
 
@@ -68,7 +68,6 @@ export default function Overview() {
   }, [dispatch])
 
   const loading = !data
-  const refreshing = status === "loading" && !!data
 
   return (
     <main className="min-h-screen bg-background">
@@ -149,7 +148,13 @@ export default function Overview() {
           </div>
 
           <div className="lg:col-span-2">
-            {loading ? <HeatmapSkeleton /> : <WeeklyHeatmap cells={data.heatmap} />}
+            {loading ? (
+              <HeatmapSkeleton />
+            ) : mode === "today" ? (
+              <DailyHeatmap cells={data.hourlyHeatmap} generatedAt={data.generatedAt} />
+            ) : (
+              <WeeklyHeatmap cells={data.heatmap} />
+            )}
           </div>
         </section>
       </div>

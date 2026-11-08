@@ -12,6 +12,7 @@ import (
 const maxNoteContentBytes = 1024 * 1024
 
 var (
+	errMarkdownExists         = errors.New("This section already has a Markdown document. Edit the existing document to add content.")
 	noteFencePattern          = regexp.MustCompile("^ {0,3}(`{3,}|~{3,})")
 	noteHeadingPattern        = regexp.MustCompile(`^ {0,3}#{1,6}[\t ]+(.+)$`)
 	noteClosingHeadingPattern = regexp.MustCompile(`[\t ]+#+[\t ]*$`)
@@ -102,9 +103,17 @@ func noteMarkdownTitle(markdown string) string {
 func validateNoteContentTree(topics []httpx.Body) error {
 	for _, topic := range topics {
 		for _, subtopic := range bodyObjects(topic.Raw("subtopics")) {
+			markdownSeen := false
 			for _, content := range bodyObjects(subtopic.Raw("content")) {
-				if _, err := normalizeNoteContent(content, nil, false); err != nil {
+				normalized, err := normalizeNoteContent(content, nil, false)
+				if err != nil {
 					return err
+				}
+				if normalized.Type == "text" && normalized.Language == "markdown" {
+					if markdownSeen {
+						return errMarkdownExists
+					}
+					markdownSeen = true
 				}
 			}
 		}

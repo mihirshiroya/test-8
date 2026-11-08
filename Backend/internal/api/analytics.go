@@ -195,6 +195,37 @@ func focusByBucket(sessions []focusSession, key string, tz int, now time.Time) [
 	return buckets
 }
 
+type hourlyHeatCell struct {
+	Date    string  `json:"date"`
+	Hour    int     `json:"hour"`
+	Minutes float64 `json:"minutes"`
+}
+
+func buildHourlyHeatmap(sessions []focusSession, weekStart string, tz int, now time.Time) []hourlyHeatCell {
+	const hoursPerWeek = 7 * 24
+	seconds := make([]float64, hoursPerWeek)
+	from := dayStart(weekStart, tz)
+	to := minTime(dayStart(shiftDay(weekStart, 7), tz), now)
+	for i := range sessions {
+		start, end := sessions[i].bounds(now)
+		cursor, stop := maxTime(start, from), minTime(end, to)
+		for cursor.Before(stop) {
+			key := dayKey(cursor, tz)
+			hour := localHour(cursor, tz)
+			index := daysBetween(weekStart, key)*24 + hour
+			hourEnd := dayStart(key, tz).Add(time.Duration(hour+1) * time.Hour)
+			sliceEnd := minTime(hourEnd, stop)
+			seconds[index] += sliceEnd.Sub(cursor).Seconds()
+			cursor = sliceEnd
+		}
+	}
+	cells := make([]hourlyHeatCell, hoursPerWeek)
+	for i := range cells {
+		cells[i] = hourlyHeatCell{Date: shiftDay(weekStart, i/24), Hour: i % 24, Minutes: seconds[i] / 60}
+	}
+	return cells
+}
+
 func bucketLabel(i int) string {
 	hour := i * dayBucketHours
 	switch {
@@ -575,12 +606,13 @@ func (s *Server) analyticsOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.JSON(w, http.StatusOK, httpx.M{"success": true, "data": httpx.M{
-		"generatedAt": ms(now),
-		"metrics":     metrics,
-		"weekSeries":  weekSeries,
-		"daySeries":   daySeries,
-		"activity":    activity,
-		"heatmap":     buildHeatmap(yearStart, today, focusMap, completedMap),
+		"generatedAt":   ms(now),
+		"metrics":       metrics,
+		"weekSeries":    weekSeries,
+		"daySeries":     daySeries,
+		"activity":      activity,
+		"heatmap":       buildHeatmap(yearStart, today, focusMap, completedMap),
+		"hourlyHeatmap": buildHourlyHeatmap(sessions, thisWeek, tz, now),
 	}})
 }
 

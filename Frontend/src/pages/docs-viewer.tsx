@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '../store'
 import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen'
@@ -9,8 +9,6 @@ import { fetchDoc, selectDoc, selectDocStatus, selectFolders } from '../store/sl
 import {
   ChevronRight,
   FileText,
-  Search,
-  X,
   ArrowRight,
   ArrowLeft,
   Home,
@@ -18,6 +16,9 @@ import {
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { NoteMarkdownPreview } from '../components/Ui/note-markdown-preview'
 import { isMarkdownContent } from '../lib/note-markdown'
+import { useDocsToc } from '../hooks/use-docs-toc'
+import { DocsSearchDialog } from '../components/Ui/docs-search-dialog'
+import type { SearchResult } from '../lib/docs-search'
 
 /* Shared Tailwind class strings. Colors come from the docs-* tokens in index.css,
  * which switch values under `.dark`, so no `dark:` variants are needed here. */
@@ -93,7 +94,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [pendingSearch, setPendingSearch] = useState<SearchResult | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
 
   // ---------------------------------------------------------------------------
@@ -157,49 +158,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
 
   const topic = doc.topics.find((item) => item.id === topicId) ?? doc.topics[0]
   const subtopic = topic?.subtopics.find((item) => item.id === subtopicId) ?? topic?.subtopics[0]
-  const toc = subtopic?.content ?? []
-
-  // ---------------------------------------------------------------------------
-  // ACTIVE TOC
-  // ---------------------------------------------------------------------------
-
-  const [activeTocId, setActiveTocId] = useState<string | null>(toc[0]?.id ?? null)
-
-  useEffect(() => {
-    setActiveTocId(toc[0]?.id ?? null)
-  }, [subtopic?.id])
-
-  // ---------------------------------------------------------------------------
-  // INTERSECTION OBSERVER
-  // ---------------------------------------------------------------------------
-
-  useEffect(() => {
-    const scrollContainer = mainScrollRef.current
-    if (!scrollContainer || !toc.length) return
-
-    const sections = toc
-      .map((item) => document.getElementById(`content-${item.id}`))
-      .filter((element): element is HTMLElement => Boolean(element))
-
-    if (!sections.length) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-
-        if (visibleEntries.length > 0) {
-          const activeId = visibleEntries[0].target.id.replace('content-', '')
-          setActiveTocId((previous) => (previous === activeId ? previous : activeId))
-        }
-      },
-      { root: scrollContainer, rootMargin: '-40px 0px -60% 0px', threshold: 0 },
-    )
-
-    sections.forEach((section) => observer.observe(section))
-    return () => observer.disconnect()
-  }, [subtopic?.id])
+  const { toc, activeTocId, setActiveTocId } = useDocsToc(mainScrollRef, subtopic?.content)
 
   // ---------------------------------------------------------------------------
   // ALL SUBTOPICS + PREVIOUS / NEXT
@@ -236,9 +195,9 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
     setSubtopicId(targetSubtopic?.id ?? '')
     setExpanded((old) => ({ ...old, [nextTopic.id]: true }))
     setMobileOpen(false)
-    setActiveTocId(targetSubtopic?.content?.[0]?.id ?? null)
+    setActiveTocId(null)
 
-    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
 
     window.history.replaceState(null, '', `#${targetSubtopic?.id ?? nextTopic.id}`)
   }
@@ -247,9 +206,9 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
   // SCROLL TO TOC SECTION
   // ---------------------------------------------------------------------------
 
-  const scrollTo = (id: string) => {
+  const scrollTo = useCallback((id: string) => {
     const container = mainScrollRef.current
-    const element = document.getElementById(`content-${id}`)
+    const element = document.getElementById(id)
     if (!container || !element) return
 
     setActiveTocId(id)
@@ -258,8 +217,33 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
     const elementRect = element.getBoundingClientRect()
     const targetTop = container.scrollTop + (elementRect.top - containerRect.top) - 24
 
-    container.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' })
-    window.history.replaceState(null, '', `#content-${id}`)
+    container.scrollTo({ top: Math.max(targetTop, 0), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+    window.history.replaceState(null, '', `#${id}`)
+    element.setAttribute('tabindex', '-1')
+    element.focus({ preventScroll: true })
+  }, [setActiveTocId])
+
+  useEffect(() => {
+    if (!pendingSearch || subtopic?.id !== pendingSearch.subtopic.id || topic?.id !== pendingSearch.topic.id) return
+    if (pendingSearch.anchorId) {
+      scrollTo(pendingSearch.anchorId)
+    } else {
+      mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' })
+      const title = mainScrollRef.current?.querySelector('h1')
+      title?.setAttribute('tabindex', '-1')
+      title?.focus({ preventScroll: true })
+    }
+    setPendingSearch(null)
+  }, [pendingSearch, subtopic?.id, topic?.id, scrollTo])
+
+  const openSearchResult = (result: SearchResult) => {
+    setTopicId(result.topic.id)
+    setSubtopicId(result.subtopic.id)
+    setExpanded(previous => ({ ...previous, [result.topic.id]: true }))
+    setMobileOpen(false)
+    setSearchOpen(false)
+    setPendingSearch(result)
+    window.history.replaceState(null, '', `#${result.anchorId ?? result.subtopic.id}`)
   }
 
   // ---------------------------------------------------------------------------
@@ -284,40 +268,6 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
   // SEARCH
   // ---------------------------------------------------------------------------
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return []
-
-    const q = searchQuery.toLowerCase()
-    const results: {
-      topic: Topic
-      subtopic: Subtopic
-      contentItem?: (typeof toc)[number]
-    }[] = []
-
-    doc.topics.forEach((currentTopic) => {
-      currentTopic.subtopics.forEach((currentSubtopic) => {
-        const matchesSubtopic =
-          currentSubtopic.title.toLowerCase().includes(q) ||
-          currentSubtopic.description?.toLowerCase().includes(q)
-
-        if (matchesSubtopic) {
-          results.push({ topic: currentTopic, subtopic: currentSubtopic })
-        }
-
-        currentSubtopic.content.forEach((contentItem) => {
-          const matchesContent =
-            contentItem.title.toLowerCase().includes(q) ||
-            contentItem.content.toLowerCase().includes(q)
-
-          if (matchesContent) {
-            results.push({ topic: currentTopic, subtopic: currentSubtopic, contentItem })
-          }
-        })
-      })
-    })
-
-    return results
-  }, [searchQuery, doc])
 
   // ---------------------------------------------------------------------------
   // SIDEBAR
@@ -487,7 +437,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
         {/* RIGHT TOC */}
         <aside
           aria-label="On this page"
-          className="hidden w-[200px] shrink-0 overflow-y-auto py-9 pl-0 pr-6 min-[1100px]:block"
+          className="no-scrollbar hidden min-h-0 w-[200px] shrink-0 overflow-y-auto overscroll-contain py-9 pl-0 pr-6 min-[900px]:block"
         >
           <div>
             <h2 className={`mb-[18px] flex items-center gap-[7px] text-[13px] font-semibold ${MUTED}`}>
@@ -505,8 +455,8 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
                       type="button"
                       onClick={() => scrollTo(item.id)}
                       aria-current={isActive ? 'location' : undefined}
-                      className={`relative flex w-full items-center bg-transparent px-3 py-2 text-left text-[11px] leading-relaxed transition-colors hover:text-docs-ink ${FOCUS} ${
-                        isActive ? `font-bold ${INK}` : MUTED
+                      className={`relative flex w-full items-center bg-transparent px-3 py-2 text-left text-[11px] font-medium leading-relaxed transition-colors hover:text-docs-ink ${FOCUS} ${
+                        isActive ? INK : MUTED
                       }`}
                     >
                       {isActive && (
@@ -541,90 +491,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
 
       {/* SEARCH */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 backdrop-blur-xs">
-          <div
-            className={`w-full max-w-xl overflow-hidden border bg-docs-paper shadow-2xl ${LINE}`}
-          >
-            <div className={`flex items-center border-b bg-docs-soft/60 px-4 py-3 ${LINE}`}>
-              <Search className={`mr-3 size-5 ${MUTED}`} />
-
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search ${folderName} docs...`}
-                className={`flex-1 bg-transparent text-sm outline-none placeholder:text-docs-muted ${INK}`}
-              />
-
-              <button
-                type="button"
-                onClick={() => setSearchOpen(false)}
-                aria-label="Close search"
-                className={`rounded p-1 transition-colors hover:bg-docs-active ${MUTED} ${FOCUS}`}
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="max-h-80 overflow-y-auto p-3">
-              {searchResults.length > 0 ? (
-                <div className="space-y-1">
-                  {searchResults.map((result, index) => (
-                    <button
-                      key={`${result.topic.id}-${result.subtopic.id}-${result.contentItem?.id ?? index}`}
-                      type="button"
-                      onClick={() => {
-                        select(result.topic, result.subtopic)
-
-                        if (result.contentItem) {
-                          window.setTimeout(() => scrollTo(result.contentItem!.id), 150)
-                        }
-
-                        setSearchOpen(false)
-                        setSearchQuery('')
-                      }}
-                      className={`flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-docs-active ${FOCUS}`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-docs-accent">
-                            {result.topic.title}
-                          </span>
-                          <span className={MUTED}>/</span>
-                          <span className={`text-xs font-medium ${INK}`}>
-                            {result.subtopic.title}
-                          </span>
-                        </div>
-
-                        {result.contentItem && (
-                          <div className={`mt-1 truncate text-xs ${MUTED}`}>
-                            {result.contentItem.title}
-                          </div>
-                        )}
-                      </div>
-
-                      <ChevronRight className={`size-4 shrink-0 ${MUTED}`} />
-                    </button>
-                  ))}
-                </div>
-              ) : searchQuery.trim() ? (
-                <DocsEmptyState
-                  variant="noResults"
-                  size="sm"
-                  title={<>No results for &ldquo;{searchQuery}&rdquo;</>}
-                  description="Try a different keyword or check the spelling."
-                />
-              ) : (
-                <DocsEmptyState
-                  variant="search"
-                  size="sm"
-                  title="Search the docs"
-                  description={`Type to search through ${folderName} documentation.`}
-                />
-              )}
-            </div>
-          </div>
-        </div>
+        <DocsSearchDialog doc={doc} name={folderName} onClose={() => setSearchOpen(false)} onNavigate={openSearchResult} />
       )}
     </div>
   )

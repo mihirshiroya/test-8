@@ -1,4 +1,4 @@
-import { Children, isValidElement, useMemo, type ReactNode } from 'react'
+import { Children, isValidElement, memo, useMemo, type ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -45,7 +45,7 @@ function BlockCode({ children }: { children?: ReactNode }) {
   return <NoteCodePreview content={source} language={language} />
 }
 
-export function NoteMarkdownPreview({ markdown }: { markdown: string }) {
+export const NoteMarkdownPreview = memo(function NoteMarkdownPreview({ markdown }: { markdown: string }) {
   const plugins = useMemo(() => [rehypeRaw, [rehypeSanitize, schema], [rehypeKatex, { trust: false, strict: 'warn', throwOnError: false, maxExpand: 200, maxSize: 20 }], annotateCallouts] as import('unified').PluggableList, [])
   return <div className="note-prose note-preview">
     <ReactMarkdown remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]} rehypePlugins={plugins} components={{
@@ -55,4 +55,4 @@ export function NoteMarkdownPreview({ markdown }: { markdown: string }) {
       table: ({ children }) => <div className="note-table-scroll"><table>{children}</table></div>,
     }}>{markdown || '*Your preview will appear here.*'}</ReactMarkdown>
   </div>
-}
+})

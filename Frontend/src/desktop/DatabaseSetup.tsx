@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from "react"
 import { CheckCircle2, Database, Eye, EyeOff, Loader2, RefreshCw, ShieldCheck, XCircle } from "lucide-react"
 import logo from "../assets/logo.png"
+import WelcomeSplit from "../components/WelcomeSplit"
 import { restartBackend, saveDatabaseUrl, setupDatabase, testDatabase } from "./desktop-api"
 import { errorMessage } from "./tauri"
 import type { DbCheckResult } from "./types"
@@ -111,15 +112,25 @@ export function DatabaseSetup({
   const hint = result && !result.ok && result.code ? HINTS[result.code] : undefined
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background px-4 py-10">
-      <form onSubmit={onSave} className="flex w-full max-w-lg flex-col gap-6 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8" aria-labelledby={`${id}-title`}>
-        <header className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="" className="h-9 w-9 rounded-lg" />
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-soft text-primary" aria-hidden="true">
-              <Database size={18} />
-            </span>
+    <main>
+      <WelcomeSplit
+        desktopSetup
+        eyebrow={variant === "first-run" ? "Make yourself at home" : "Your workspace, reconnected"}
+        title={<>Your rhythm.<br />Your space.<br />Your database.</>}
+        description="A calmer place for everything you want to do. Connect PostgreSQL and make this workspace truly yours."
+        benefits={[
+          "Your tasks, notes and focus time in one place",
+          "Connect a local or hosted PostgreSQL database",
+          "Credentials kept in your system’s secure store",
+        ]}
+      >
+      <form onSubmit={onSave} className="welcome-card welcome-setup-form flex flex-col gap-5" aria-labelledby={`${id}-title`}>
+        <header className="flex flex-col">
+          <div className="welcome-card-brand">
+            <img src={logo} alt="" />
+            <span>Consistent</span>
           </div>
+          <span className="mb-3 flex items-center gap-2 text-xs text-muted-foreground"><Database size={14} aria-hidden="true" /> YOUR WORKSPACE STARTS HERE</span>
           <div className="flex flex-col gap-1.5">
             <h1 id={`${id}-title`} className="text-balance text-2xl font-semibold text-foreground">{copy.title}</h1>
             <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{copy.description}</p>
@@ -221,7 +232,7 @@ export function DatabaseSetup({
           </div>
         )}
 
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="welcome-setup-actions gap-2">
           {onCancel && (
             <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               Cancel
@@ -251,7 +262,8 @@ export function DatabaseSetup({
           Credentials are stored in your system&apos;s secure credential store, never in plain files.
         </p>
       </form>
-    </div>
+      </WelcomeSplit>
+    </main>
   )
 }
 

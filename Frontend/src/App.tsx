@@ -5,6 +5,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from 'react-router-dom';
 import NotchNavbar from "./pages/Notch";
 import {
@@ -30,6 +31,7 @@ import AdminRoute from './components/AdminRoute';
 
 
 
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
@@ -143,6 +145,11 @@ const ThemedToaster: React.FC = () => {
 };
 
 
+const AppNotch: React.FC = () => {
+  const { pathname } = useLocation();
+  return pathname === '/' && !IS_DESKTOP ? null : <NotchNavbar />;
+};
+
 const AppContent: React.FC = () => {
   return (
     <Router>
@@ -153,17 +160,17 @@ const AppContent: React.FC = () => {
         {/* =====================================================
             FIXED TOP-CENTER NOTCH NAVBAR
             ===================================================== */}
-        <NotchNavbar />
+        <AppNotch />
 
         <Routes>
 
           {/* =====================================================
               ROOT
-              / -> /login (which forwards authenticated users to /overview)
+              Public homepage on web; desktop opens the login/workspace flow.
               ===================================================== */}
           <Route
             path="/"
-            element={<Navigate to="/login" replace />}
+            element={IS_DESKTOP ? <Navigate to="/login" replace /> : <Landing />}
           />
 
           {/* =====================================================
