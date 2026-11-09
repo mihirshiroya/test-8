@@ -22,19 +22,18 @@ export type ThemeColors = {
 };
 
 export const THEMES: Record<ThemeName, ThemeColors> = {
-light: {
-  bg: '#f1ebdf',
-  ink: '#1a2317',
-  accent: '#65ABC4',
-  soft: '#C4E1EC',
-},
-
-dark: {
-  bg: '#171c1f',
-  ink: '#f1ebdf',
-  accent: '#65ABC4',
-  soft: '#344F5A',
-},
+  light: {
+    bg: '#b9c9b8',
+    ink: '#213c30',
+    accent: '#7f9b80',
+    soft: '#d5e1ce',
+  },
+  dark: {
+    bg: '#213c30',
+    ink: '#d5e1ce',
+    accent: '#a8bfa3',
+    soft: '#526d56',
+  },
 };
 
 

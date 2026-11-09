@@ -137,13 +137,10 @@ export function RecentActivity({
             return (
               <li
                 key={item.id}
-                className="group relative flex gap-3 pb-5 last:pb-0 transition-all duration-300"
-                style={{
-                  animation: `fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both`,
-                  animationDelay: `${i * 80}ms`,
-                }}
+                className={isPanel ? 'notification-row group relative flex gap-3' : 'group relative flex gap-3 pb-5 last:pb-0 transition-all duration-300'}
+                data-category={categoryOf(item)}
               >
-                {!isLast && (
+                {!isPanel && !isLast && (
                   <span
                     aria-hidden="true"
                     className="absolute left-[15px] top-8 h-[calc(100%-1.75rem)] w-px bg-[var(--color-border)] origin-top transition-all duration-500 group-hover:bg-primary/40 group-hover:w-[1.5px]"
@@ -155,12 +152,12 @@ export function RecentActivity({
                 )}
 
                 <div className="relative z-10 shrink-0">
-                  {isFirst && (
+                  {!isPanel && isFirst && (
                     <span className="absolute inset-0 rounded-notion-full bg-primary/20 animate-ping pointer-events-none opacity-75" />
                   )}
 
                   <span
-                    className={`relative skew-x-3 group-hover:skew-x-0 grid h-8 w-8 place-items-center rounded-notion-full border border-soft bg-surface text-steel shadow-sm transition-all duration-300 ease-out group-hover:scale-110 group-hover:shadow-md ${style.badge}`}
+                    className={isPanel ? 'notification-icon grid size-8 place-items-center rounded-full' : `relative skew-x-3 group-hover:skew-x-0 grid size-8 place-items-center rounded-notion-full border border-soft bg-surface text-steel shadow-sm transition-all duration-300 ease-out group-hover:scale-110 group-hover:shadow-md ${style.badge}`}
                   >
                     <Icon
                       className={`h-4 w-4 transition-all duration-300 ease-out group-hover:rotate-12 group-hover:scale-110 ${style.iconColor}`}
@@ -169,15 +166,15 @@ export function RecentActivity({
                 </div>
 
                 <div className="min-w-0 flex-1 pt-0.5 transition-transform duration-200 group-hover:translate-x-0.5">
-                  <p className="text-body-sm !font-inter text-primary transition-colors duration-200 group-hover:text-primary-hover">
+                  <p className={isPanel ? 'text-[13px] font-medium leading-5 text-primary' : 'text-body-sm !font-inter text-primary transition-colors duration-200 group-hover:text-primary-hover'}>
                     {item.text}
                   </p>
                   <p className="mt-0.5 flex items-center gap-1.5 text-caption text-stone">
                     <span>{item.meta}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{item.ago}</span>
+                    {!isPanel && <><span aria-hidden="true">·</span><span>{item.ago}</span></>}
                   </p>
                 </div>
+                {isPanel && <span className="shrink-0 pt-1 text-[10px] tabular-nums text-steel">{item.ago}</span>}
               </li>
             )
           })}

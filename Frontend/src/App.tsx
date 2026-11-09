@@ -110,8 +110,8 @@ const DocsLayout: React.FC<{
         fixed
         inset-0
         z-[100]
-        h-screen
-        w-screen
+        h-dvh
+        w-full
         overflow-hidden
         bg-background
       "
@@ -155,7 +155,7 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <WorkspaceAppearance />
-      <div className="App min-h-screen w-full">
+      <div className="App min-h-dvh w-full">
 
         <DesktopBridge />
 

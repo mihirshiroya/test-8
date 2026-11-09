@@ -4,7 +4,7 @@ import { useDocsToc } from '../hooks/use-docs-toc'
 import type { SearchResult } from '../lib/docs-search'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '../store'
-import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
+import { DocsCodeBlock, DocsWorkspaceHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen.tsx'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
 import { DocsEmptyState } from '../components/Ui/docs-empty-set.tsx'
@@ -530,7 +530,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     <aside
       id="handbook-navigation"
       aria-label="Documentation navigation"
-      className={`min-h-0 shrink-0 flex-col border-r border-soft bg-canvas ${
+      className={`docs-workbench-sidebar min-h-0 shrink-0 flex-col border-r border-docs-line bg-docs-paper ${
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-40 flex w-[min(300px,85vw)] shadow-[12px_0_40px_rgba(0,0,0,0.15)] md:static md:z-auto md:w-56 md:shadow-none min-[1100px]:w-[260px]'
           : 'hidden md:flex md:w-56 min-[1100px]:w-[260px]'
@@ -624,7 +624,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
 
   return (
     <div
-      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
+      className="docs-workbench flex h-full min-h-0 w-full flex-col overflow-hidden bg-docs-paper font-inter text-docs-ink selection:bg-docs-active"
       onClickCapture={event => {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
         const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
@@ -635,7 +635,8 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
         }
       }}
     >
-      <DocsMobileHeader
+      <DocsWorkspaceHeader
+        folderId={folderId}
         title={meta.label}
         editable
         open={mobileOpen}
@@ -649,7 +650,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
         {/* MAIN DOCUMENT SCROLL CONTAINER */}
         <main
           ref={mainScrollRef}
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar bg-background"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-docs-paper"
         >
           <div className="mx-auto w-full max-w-[900px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
             {/* Breadcrumbs */}

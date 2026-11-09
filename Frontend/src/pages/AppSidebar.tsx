@@ -51,7 +51,8 @@ import { NotificationsPanel } from '../components/Ui/notificaion-panel.tsx'
 import { useWorkspaceStore } from '../store/slices/taskSlice.tsx'
 import { logoutUser } from '../store/slices/authSlice'
 import { useDispatch } from 'react-redux'
-import type { AppDispatch } from '../store'
+import { useAppSelector, type AppDispatch } from '../store'
+import { selectOverview } from '../store/slices/analyticsSlice'
 import { toast } from '../lib/toast'
 import {
   DropdownMenu,
@@ -143,7 +144,7 @@ function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(getInitialCollapsed)
   const [query] = useState('')
-  const [notifications, setNotifications] = useState(3)
+  const notifications = useAppSelector(selectOverview).data?.activity.length ?? 0
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [projectDialog, setProjectDialog] = useState<{
@@ -226,7 +227,7 @@ function AppSidebar() {
     ]
 
     const exactMatch = allItems.find(
-      (item) => location.pathname === item.path,
+      (item) => location.pathname.toLowerCase() === item.path.toLowerCase(),
     )
 
     if (exactMatch) return exactMatch
@@ -399,11 +400,11 @@ function AppSidebar() {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <div className="workspace-shell min-h-screen bg-sidebar text-foreground">
+    <div className="workspace-shell h-dvh overflow-hidden bg-sidebar text-foreground">
 
       <div
         className={cn(
-          'grid h-screen overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',
+          'grid h-full min-h-0 overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',
           collapsed
             ? 'md:grid-cols-[68px_minmax(0,1fr)]'
             : 'md:grid-cols-[240px_minmax(0,1fr)]',
@@ -415,7 +416,7 @@ function AppSidebar() {
 
         <aside
           className={cn(
-            'workspace-sidebar group/sidebar fixed inset-y-0 left-0 z-30 flex h-screen w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
+            'workspace-sidebar group/sidebar fixed inset-y-0 left-0 z-30 flex h-dvh w-[248px] max-w-[85vw] flex-col border-r border-soft bg-[var(--sidebar-bg)]',
             'transition-transform duration-300 ease-in-out',
             mobileOpen ? 'translate-x-0' : '-translate-x-full',
             'md:relative md:inset-auto md:z-auto md:h-full md:min-h-0 md:w-full md:max-w-none md:translate-x-0',
@@ -686,7 +687,6 @@ function AppSidebar() {
                 aria-label="Notifications"
                 aria-expanded={notificationsOpen}
                 onClick={() => {
-                  setNotifications(0)
                   setNotificationsOpen(true)
                 }}
                 className="relative grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"

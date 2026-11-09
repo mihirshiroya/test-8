@@ -17,13 +17,8 @@ export function WorkDialog({ title, children, onClose, busy = false }: { title: 
       previous?.focus()
     }
   }, [])
-  return createPortal(<dialog ref={ref} aria-labelledby={titleId} aria-busy={busy} className="work-dialog kumo-dialog" onCancel={event => { event.preventDefault(); if (!busy) onClose() }} onClick={event => { if (event.target === event.currentTarget && !busy) { const r = event.currentTarget.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) onClose() } }}>
-    <header className="kumo-dialog-header">
-      <h2 id={titleId} className="kumo-dialog-title">{title}</h2>
-      <button type="button" className="kumo-dialog-close" aria-label="Close dialog" disabled={busy} onClick={onClose}><X size={16} /></button>
-    </header>
-    <div className="kumo-dialog-card">
-      <div className="kumo-dialog-body">{children}</div>
-    </div>
+  return createPortal(<dialog ref={ref} aria-labelledby={titleId} aria-busy={busy} className="work-dialog" onCancel={event => { event.preventDefault(); if (!busy) onClose() }} onClick={event => { if (event.target === event.currentTarget && !busy) { const r = event.currentTarget.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) onClose() } }}>
+    <header className="flex items-center justify-between gap-4 border-b border-soft p-5"><h2 id={titleId} className="text-lg font-semibold">{title}</h2><button type="button" className="work-icon" aria-label="Close dialog" disabled={busy} onClick={onClose}><X size={18} /></button></header>
+    <div className="p-5">{children}</div>
   </dialog>, document.body)
 }

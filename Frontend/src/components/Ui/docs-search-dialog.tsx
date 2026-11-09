@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, Search, X } from 'lucide-react'
+import { CornerDownLeft, FileText, Hash, Search, X } from 'lucide-react'
 import type { Doc } from '../../lib/docs-data'
 import { buildDocsSearchIndex, searchDocs, type SearchResult } from '../../lib/docs-search'
 
@@ -22,7 +22,15 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const deferredQuery = useDeferredValue(query)
   const index = useMemo(() => buildDocsSearchIndex(doc), [doc])
-  const results = useMemo(() => searchDocs(index, deferredQuery), [index, deferredQuery])
+  const results = useMemo(() => {
+    const groups = new Map<string, SearchResult[]>()
+    for (const result of searchDocs(index, deferredQuery)) {
+      const group = groups.get(result.topic.id) ?? []
+      group.push(result)
+      groups.set(result.topic.id, group)
+    }
+    return [...groups.values()].flat()
+  }, [index, deferredQuery])
   const pending = query !== deferredQuery
 
   useEffect(() => {
@@ -41,9 +49,9 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
     aria-labelledby="docs-search-title"
     onCancel={event => { event.preventDefault(); onClose() }}
     onClick={event => { if (event.target === event.currentTarget) onClose() }}
-    className="fixed inset-x-0 bottom-auto top-12 m-0 mx-auto w-[calc(100%-2rem)] max-w-2xl overflow-hidden border border-docs-line bg-docs-paper p-0 text-docs-ink shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm md:top-20"
+    className="docs-search-dialog fixed inset-x-0 bottom-auto top-[8dvh] m-0 mx-auto w-[calc(100%-2rem)] max-w-[720px] overflow-hidden rounded-2xl border border-docs-line-strong bg-docs-paper p-0 text-docs-ink shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
   >
-    <div className="flex items-center gap-3 border-b border-docs-line bg-docs-soft/60 px-4 py-3">
+    <div className="flex items-center gap-3 border-b border-docs-line px-5 py-4">
       <Search aria-hidden="true" className="size-5 shrink-0 text-docs-muted" />
       <h2 id="docs-search-title" className="sr-only">Search {name} documentation</h2>
       <input
@@ -69,7 +77,7 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
             onNavigate(results[selectedIndex])
           }
         }}
-        placeholder="Search topics, code, or ask a question…"
+        placeholder="Search documentation…"
         className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none placeholder:text-docs-muted"
       />
       <button type="button" aria-label="Close search" onClick={onClose} className="rounded p-1 text-docs-muted hover:bg-docs-active focus-visible:outline-2 focus-visible:outline-docs-accent"><X className="size-4" /></button>
@@ -78,9 +86,10 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
       <span>All topics in {name} · headings, text &amp; code</span>
       <span role="status" aria-live="polite">{pending ? 'Searching…' : query.trim() ? `${results.length}${results.length === 40 ? '+' : ''} ${results.length === 1 ? 'result' : 'results'}` : ''}</span>
     </div>
-    <div id="docs-search-results" aria-busy={pending} className="no-scrollbar max-h-[min(60dvh,480px)] overflow-y-auto overscroll-contain px-2 pb-2">
-      {results.length ? <ul id="docs-search-list" role="listbox" aria-label="Matching documentation sections" className="space-y-1">
+    <div id="docs-search-results" aria-busy={pending} className="max-h-[min(58dvh,480px)] overflow-y-auto overscroll-contain px-3 pb-3">
+      {results.length ? <ul id="docs-search-list" role="listbox" aria-label="Matching documentation sections" className="flex flex-col gap-1">
         {results.map((result, resultIndex) => <li key={result.id} role="none">
+          {(resultIndex === 0 || results[resultIndex - 1].topic.id !== result.topic.id) && <div role="presentation" className="mb-1 mt-2 bg-docs-soft px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-docs-muted">{result.topic.title}</div>}
           <button
             id={`docs-result-${resultIndex}`}
             role="option"
@@ -89,14 +98,14 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
             disabled={pending}
             onClick={() => onNavigate(result)}
             onFocus={() => setSelectedIndex(resultIndex)}
-            className={`flex w-full items-start gap-3 rounded px-3 py-3 text-left transition-colors hover:bg-docs-active focus-visible:outline-2 focus-visible:outline-docs-accent ${selectedIndex === resultIndex ? 'bg-docs-active' : ''}`}
+            className={`flex w-full items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors hover:bg-docs-soft focus-visible:outline-2 focus-visible:outline-docs-accent ${selectedIndex === resultIndex ? 'border-docs-accent bg-docs-active' : 'border-transparent'}`}
           >
+            {result.anchorId ? <Hash aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-docs-accent" /> : <FileText aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-docs-muted" />}
             <div className="min-w-0 flex-1">
-              <div className="mb-1 text-[11px] text-docs-muted [overflow-wrap:anywhere]">{result.path.join(' › ')}</div>
               <div className="text-sm font-semibold [overflow-wrap:anywhere]"><Highlight text={result.title} words={result.matchedWords} /></div>
               {result.snippet && <p className="mt-1 text-xs leading-relaxed text-docs-muted [overflow-wrap:anywhere]"><Highlight text={result.snippet} words={result.matchedWords} /></p>}
             </div>
-            <ChevronRight aria-hidden="true" className="mt-4 size-4 shrink-0 text-docs-muted" />
+            <CornerDownLeft aria-hidden="true" className={`mt-1 size-4 shrink-0 text-docs-muted ${selectedIndex === resultIndex ? '' : 'opacity-0'}`} />
           </button>
         </li>)}
       </ul> : <div className="px-4 py-10 text-center">
@@ -104,6 +113,6 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
         <p className="mt-2 text-xs leading-relaxed text-docs-muted">{query.trim() ? 'Try a shorter phrase, a related concept, or a code identifier.' : 'Search headings, explanations, and code across this documentation. Related programming terms and small typos are supported.'}</p>
       </div>}
     </div>
-    <p id="docs-search-help" className="border-t border-docs-line px-4 py-3 text-[11px] text-docs-muted">↑ ↓ to choose · Enter to open the exact section · Esc to close</p>
+    <div id="docs-search-help" className="flex flex-wrap items-center justify-between gap-3 border-t border-docs-line px-4 py-3 text-[11px] text-docs-muted"><p className="flex items-center gap-2"><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select <kbd>Esc</kbd> Close</p><span>{name} docs</span></div>
   </dialog>
 }

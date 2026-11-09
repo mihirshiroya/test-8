@@ -80,15 +80,15 @@ export function AppDialog({
   if (!open) return null
 
   const panelClass = cn(
-    'kumo-dialog relative max-h-[calc(100dvh-2rem)] w-full outline-none',
+    'relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-xs border border-soft bg-surface shadow-2xl outline-none',
     SIZES[size],
     className,
   )
 
   const content = (
     <>
-      <header className="kumo-dialog-header">
-        <h2 id={titleId} className="kumo-dialog-title">
+      <header className="flex items-center justify-between gap-4 border-b border-soft px-5 py-4">
+        <h2 id={titleId} className="text-lg font-semibold text-ink font-inter! text-balance">
           {title}
         </h2>
 
@@ -97,24 +97,26 @@ export function AppDialog({
           onClick={onClose}
           disabled={!dismissible}
           aria-label="Close"
-          className="kumo-dialog-close"
+          className="-mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-steel transition-colors hover:bg-gray-tint hover:text-ink disabled:opacity-40"
         >
-          <X className="size-4" />
+          <X className="size-[18px]" />
         </button>
       </header>
 
-      <div className="kumo-dialog-card">
-        <div className="kumo-dialog-body">
-          {description && (
-            <p id={descId} className="kumo-dialog-description">
-              {description}
-            </p>
-          )}
-          {children}
-        </div>
-
-        {footer && <footer className="kumo-dialog-footer">{footer}</footer>}
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5">
+        {description && (
+          <p id={descId} className="text-sm leading-relaxed text-steel text-pretty">
+            {description}
+          </p>
+        )}
+        {children}
       </div>
+
+      {footer && (
+        <footer className="flex items-center justify-end gap-2 border-t border-soft px-5 py-4">
+          {footer}
+        </footer>
+      )}
     </>
   )
 
@@ -183,13 +185,13 @@ export function AppDialogSection({
   const TitleTag = htmlFor ? 'label' : 'p'
 
   return (
-    <section className={cn('kumo-dialog-section', className)}>
+    <section className={cn('rounded-sm border border-soft bg-canvas p-4', className)}>
       {(icon || title || description) && (
         <div className="flex items-start gap-3">
           {icon && (
             <span
               aria-hidden="true"
-              className="kumo-dialog-section-icon"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-soft bg-surface text-charcoal [&_svg]:size-[18px]"
             >
               {icon}
             </span>
@@ -198,7 +200,7 @@ export function AppDialogSection({
             {title && (
               <TitleTag
                 htmlFor={htmlFor}
-                className="block text-[13px] font-medium text-ink"
+                className="block text-sm font-semibold text-ink font-inter!"
               >
                 {title}
               </TitleTag>
@@ -218,9 +220,11 @@ export function AppDialogSection({
 }
 
 const BUTTON_VARIANTS = {
-  primary: 'kumo-button kumo-button--primary',
-  secondary: 'kumo-button',
-  destructive: 'kumo-button kumo-button--danger',
+  primary:
+    'bg-primary text-on-primary shadow-sm hover:bg-primary-pressed',
+  secondary:
+    'border border-soft bg-canvas text-charcoal hover:bg-gray-tint',
+  destructive: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700',
 } as const
 
 export function AppDialogButton({
@@ -235,7 +239,7 @@ export function AppDialogButton({
     <button
       type={type}
       className={cn(
-        'disabled:pointer-events-none',
+        'inline-flex h-10 items-center justify-center gap-2 rounded-sm px-4 text-sm font-medium font-inter! transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -244,4 +248,5 @@ export function AppDialogButton({
   )
 }
 
-export const appDialogInputClass = 'kumo-input w-full'
+export const appDialogInputClass =
+  'h-11 w-full rounded-xs border border-soft bg-surface-soft px-3.5 text-sm text-ink outline-none transition-colors placeholder:text-stone focus:border-primary'

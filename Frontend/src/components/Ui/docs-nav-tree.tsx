@@ -115,7 +115,7 @@ export function DocsNavTree({
                       <div
                         className={`flex min-w-0 items-center transition-colors ${
                           isActive
-                            ? 'bg-docs-soft text-docs-ink'
+                            ? 'rounded-md bg-docs-soft text-docs-ink'
                             : 'text-docs-muted hover:bg-docs-soft hover:text-docs-ink'
                         }`}
                       >

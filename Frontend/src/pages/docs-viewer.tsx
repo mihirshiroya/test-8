@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '../store'
-import { DocsCodeBlock, DocsMobileHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen'
+import { DocsCodeBlock, DocsWorkspaceHeader, DocsSidebarFooter, DocsSidebarHeader } from '../components/Ui/docs-screen'
 import { DocsNavTree } from '../components/Ui/docs-nav-tree'
 import { DocsEmptyState } from '../components/Ui/docs-empty-set'
 import { INITIAL_DOCS, type Doc, type Topic, type Subtopic } from '../lib/docs-data'
@@ -277,7 +277,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
     <aside
       id="handbook-navigation"
       aria-label="Documentation navigation"
-      className={`min-h-0 shrink-0 flex-col border-r bg-canvas ${LINE} ${
+      className={`docs-workbench-sidebar min-h-0 shrink-0 flex-col border-r bg-docs-paper ${LINE} ${
         mobileOpen
           ? 'fixed inset-y-0 left-0 z-40 flex w-[min(300px,85vw)] shadow-[12px_0_40px_rgba(0,0,0,0.15)] md:static md:z-auto md:w-56 md:shadow-none min-[1100px]:w-[232px]'
           : 'hidden md:flex md:w-56 min-[1100px]:w-[232px]'
@@ -316,10 +316,11 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
 
   return (
     <div
-      className={`mx-auto flex h-full min-h-0 w-full max-w-[1600px] flex-col overflow-hidden font-sans max-md:border-0 shadow-[0_16px_60px_-24px_rgba(73,55,117,0.33),0_2px_8px_rgba(73,55,117,0.04)] selection:bg-docs-active`}
+      className="docs-workbench flex h-full min-h-0 w-full flex-col overflow-hidden bg-docs-paper font-inter text-docs-ink selection:bg-docs-active"
     >
       {/* MOBILE HEADER (visible only below md inside the component) */}
-      <DocsMobileHeader
+      <DocsWorkspaceHeader
+        folderId={folderId}
         title={folderName}
         open={mobileOpen}
         onOpen={() => setMobileOpen(true)}
@@ -333,7 +334,7 @@ function DocsViewerContent({ folderId }: { folderId: string }) {
         {/* DOCUMENT SCROLL CONTAINER */}
         <main
           ref={mainScrollRef}
-          className="min-w-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar bg-background"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-docs-paper"
         >
           <div className="mx-auto w-full max-w-[900px] px-6 pb-12 pt-6 md:px-12 md:pb-16 md:pt-8 min-[1100px]:px-16 min-[1100px]:pt-9">
             {/* BREADCRUMB */}
