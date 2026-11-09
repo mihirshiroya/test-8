@@ -11,6 +11,7 @@ import {
   formatClock,
 } from "../../lib/time"
 import { SessionGantt } from "./session-gantt"
+import { PixelDivider } from "./pixel-divider"
 import { ThemedSvg } from "../../lib/svg-theme"
 import noResultsRaw from "../../assets/31-no-results.svg?raw"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './empty'
@@ -148,7 +149,7 @@ export function SessionHistory() {
   })
 
   return (
-    <div className="mx-auto w-full">
+    <div className="dashboard-joined dashboard-sessions mx-auto w-full">
       {/* Header */}
       <header className="workspace-page-heading flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold tracking-tight font-inter! text-foreground text-balance">
@@ -169,11 +170,12 @@ export function SessionHistory() {
           placeholder={dateLabel}
         />
       </header>
+      <PixelDivider />
 
       {status === "failed" && (
         <div
           role="alert"
-          className="mb-6 flex flex-wrap items-center justify-between gap-3 border border-soft p-4 text-sm text-foreground"
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-soft p-4 text-sm text-foreground"
         >
           <span>{error ?? "Could not load sessions."}</span>
           <button
@@ -189,7 +191,7 @@ export function SessionHistory() {
       {/* Stat strip */}
       <div
         className={cn(
-          "mb-8 grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4",
+          "dashboard-metrics grid grid-cols-1 transition-opacity sm:grid-cols-2 lg:grid-cols-4",
           loading && "opacity-50"
         )}
         aria-busy={loading}
@@ -221,10 +223,11 @@ export function SessionHistory() {
           )} / ${formatDuration(goalSeconds)}`}
         />
       </div>
+      <PixelDivider />
 
       {/* Progress */}
       {/* Progress */}
-<section className="workspace-panel mb-6">
+<section className="workspace-panel">
   <div className="mb-4 flex items-center justify-between gap-4">
     <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
       Progress
@@ -256,9 +259,10 @@ export function SessionHistory() {
     ))}
   </div>
 </section>
+      <PixelDivider />
 
       {/* Timeline chart panel */}
-      <section className="workspace-panel mb-6">
+      <section className="workspace-panel">
         <div className="mb-6 flex items-center justify-between mb-4">
           <h2 className="text-md font-semibold capitalize tracking-wider text-foreground">
             Timeline
@@ -274,9 +278,10 @@ export function SessionHistory() {
           colors={colors}
         />
       </section>
+      <PixelDivider />
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 gap-4 lg:h-[500px] lg:grid-cols-2">
+      <div className="dashboard-row grid grid-cols-1 lg:h-[500px] lg:grid-cols-2">
         {/* Sessions */}
         <section className="workspace-panel min-h-0 overflow-y-auto no-scrollbar">
           <h2 className="text-md font-semibold capitalize tracking-wider text-foreground mb-4">
@@ -298,7 +303,7 @@ export function SessionHistory() {
             </Empty>
           )}
 
-          <ol className="flex flex-col space-y-2">
+          <ol className="flex flex-col">
             {sessions.map(
               (session, index) => (
                 <SessionRow

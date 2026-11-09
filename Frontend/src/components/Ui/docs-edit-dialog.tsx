@@ -48,7 +48,7 @@ export function DocsEditDialog({ folderId, target, onClose, onSelect }: { folder
       setSaving(false)
     }
   }
-  return <WorkDialog title={heading} busy={saving} onClose={onClose}>
+  return <WorkDialog title={heading} busy={saving} onClose={onClose} role={deleting ? 'alertdialog' : 'dialog'}>
     <form className="flex flex-col gap-4" onSubmit={submit}>
       {deleting ? <p className="text-sm leading-relaxed text-secondary">Delete <strong className="text-primary">{target.content?.title ?? target.title}</strong>? {target.kind !== 'content' && 'All content inside will also be deleted. '}This cannot be undone.</p> : <>
         <label className="work-field">Title<input autoFocus className="work-input" required maxLength={200} value={title} disabled={saving} onChange={e => setTitle(e.target.value)} placeholder={`Name this ${noun}`} /></label>
@@ -59,7 +59,7 @@ export function DocsEditDialog({ folderId, target, onClose, onSelect }: { folder
         </>}
       </>}
       {error && <p className="work-error" role="alert">{error}</p>}
-      <div className="mt-2 flex justify-end gap-2"><button type="button" className="work-button" onClick={onClose} disabled={saving} autoFocus={deleting}>Cancel</button><button type="submit" className={`work-button ${deleting ? 'text-[var(--color-error)]' : 'work-button--primary'}`} disabled={saving || (!deleting && (!title.trim() || (target.kind === 'content' && !content.trim())))}>{saving ? 'Saving…' : deleting ? 'Delete permanently' : 'Save changes'}</button></div>
+      <div className="mt-2 flex justify-end gap-2"><button type="button" className="work-button" onClick={onClose} disabled={saving} autoFocus={deleting}>Cancel</button><button type="submit" className={`work-button ${deleting ? 'kumo-button--danger' : 'work-button--primary'}`} disabled={saving || (!deleting && (!title.trim() || (target.kind === 'content' && !content.trim())))}>{saving ? 'Saving…' : deleting ? 'Delete permanently' : 'Save changes'}</button></div>
     </form>
   </WorkDialog>
 }

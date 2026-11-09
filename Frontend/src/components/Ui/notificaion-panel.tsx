@@ -48,12 +48,11 @@ export function NotificationsPanel({ open, onClose, workspaces }: {
       const bounds = event.currentTarget.getBoundingClientRect()
       if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose()
     } }}
-    className={cn('notification-dialog', expanded && 'notification-dialog--expanded')}
+    className={cn('notification-dialog kumo-dialog', expanded && 'notification-dialog--expanded')}
   >
-    <div className="flex max-h-[inherit] min-h-0 flex-col">
-      <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-5">
+      <header className="kumo-dialog-header">
         <div>
-          <h2 id="notifications-title" className="text-sm font-semibold text-primary">Notifications</h2>
+          <h2 id="notifications-title" className="kumo-dialog-title">Notifications</h2>
           <p id="notifications-description" className="mt-1 text-xs text-steel">The latest across your workspace.</p>
         </div>
         <div className="flex items-center gap-1">
@@ -62,6 +61,7 @@ export function NotificationsPanel({ open, onClose, workspaces }: {
           <button type="button" aria-label="Close notifications" onClick={onClose} className="notification-control"><X className="size-4" /></button>
         </div>
       </header>
+    <div className="kumo-dialog-card">
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-soft px-4">
         <div role="group" aria-label="Filter notifications by activity" className="flex gap-4">
           {tabs.map(tab => <button key={tab.id} type="button" aria-pressed={activeFilter === tab.id} onClick={() => setActiveFilter(tab.id)} className="notification-tab">
@@ -83,7 +83,7 @@ export function NotificationsPanel({ open, onClose, workspaces }: {
           {data && <RecentActivity items={visibleItems} variant="panel" />}
         </div> : <RecentActivity items={visibleItems} variant="panel" />}
       </div>
-      <footer className="flex shrink-0 items-center justify-between border-t border-soft px-5 py-3 text-[10px] text-steel"><span>Workspace activity</span><span>Esc to close</span></footer>
+      <footer className="kumo-dialog-footer text-[10px] text-steel"><span>Workspace activity</span><span>Esc to close</span></footer>
     </div>
   </dialog>
 }

@@ -12,6 +12,8 @@ beforeAll(() => {
   Range.prototype.getBoundingClientRect = () => new DOMRect()
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Element.prototype.scrollIntoView = vi.fn()
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
 })
 
 const sample = '# Rich note\n\n## Section\n\n**Bold** *italic* ~~deleted~~ [link](https://example.com)\n\n![Useful diagram](https://example.com/image.png)\n\n- Item\n\n1. Ordered\n\n- [x] Done\n- [ ] Pending\n\n| Name | Status |\n| --- | --- |\n| Notes | Ready |\n\n> [!WARNING]\n> Check carefully.\n\n---\n\n```typescript\nconst answer: number = 42\n```\n\n```mermaid\nflowchart LR\n A --> B\n```\n\n$$\nE = mc^2\n$$\n\nInline $$x^2$$ math.\n\n```video\nhttps://youtu.be/dQw4w9WgXcQ\n```'
@@ -146,6 +148,31 @@ describe('inline note editor', () => {
     expect(save).toHaveBeenCalledTimes(1)
     resolveSave()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save content' }).hasAttribute('disabled')).toBe(false))
+  })
+  it('keeps a dirty draft after cancelling and closes only after confirmation', async () => {
+    const close = vi.fn()
+    render(<NoteMarkdownEditor initialMarkdown="# Original" onSave={vi.fn()} onClose={close} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Markdown' }))
+    fireEvent.change(screen.getByLabelText('Raw Markdown'), { target: { value: '# Unsaved draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Close editor' }))
+    expect(screen.getByRole('alertdialog', { name: 'Discard unsaved changes?' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    expect(close).not.toHaveBeenCalled()
+    expect((screen.getByLabelText('Raw Markdown') as HTMLTextAreaElement).value).toBe('# Unsaved draft')
+    fireEvent.click(screen.getByRole('button', { name: 'Close editor' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    await waitFor(() => expect(close).toHaveBeenCalledTimes(1))
+  })
+  it('retains the current source when a template replacement is cancelled', async () => {
+    render(<NoteMarkdownEditor initialMarkdown="# Original" onSave={vi.fn()} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Markdown' }))
+    fireEvent.change(screen.getByLabelText('Raw Markdown'), { target: { value: '# Keep this draft' } })
+    fireEvent.change(screen.getByLabelText('New content template'), { target: { value: 'code' } })
+    expect(screen.getByRole('alertdialog', { name: 'Replace unsaved draft?' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    expect((screen.getByLabelText('Raw Markdown') as HTMLTextAreaElement).value).toBe('# Keep this draft')
   })
   it('supports document and code templates with a language selector', async () => {
     render(<NoteMarkdownEditor onSave={vi.fn()} onClose={vi.fn()} />)

@@ -25,6 +25,7 @@ import { ActivityHeatmap } from '../components/Ui/activity-heatmap'
 import { GRAIN_TEXTURE } from '../components/Ui/trend-chart'
 import { HeatmapSkeleton } from '../components/Ui/skeletons'
 import { PixelShape } from '../components/Ui/pixel-shape'
+import { PixelDivider } from '../components/Ui/pixel-divider'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../components/Ui/empty'
 import { ThemedSvg } from '../lib/svg-theme'
 import checklistRaw from '../assets/02-checklist.svg?raw'
@@ -591,6 +592,7 @@ export default function ProductivityProfile() {
         
 
         <ProfileHeader user={user} current={current} onEdit={() => setEditOpen(true)} />
+        <PixelDivider />
 
         {status === 'failed' && (
           <div
@@ -650,21 +652,26 @@ export default function ProductivityProfile() {
     </div>
   ))}
 </section>
+        <PixelDivider />
 
         <AchievementsSection data={data} />
+        <PixelDivider />
 
         <ProfileProjects projects={data?.projects ?? null} />
+        <PixelDivider />
 
         <section aria-label="Activity and focus insights" className="dashboard-profile-insights flex flex-col">
           <div className="w-full min-w-0 overflow-x-auto">
             {data ? <ActivityHeatmap cells={data.heatmap} /> : <HeatmapSkeleton />}
           </div>
+          <PixelDivider />
           <ProductivityCard
             month={productivity.month}
             monthly={productivity.data}
             loading={productivity.status === 'loading' || (loading && !productivity.data)}
             onMonthChange={(m) => dispatch(fetchProductivityMonth(m))}
           />
+          <PixelDivider />
           <FocusTimeCard
             month={focus.month}
             focus={focus.data}

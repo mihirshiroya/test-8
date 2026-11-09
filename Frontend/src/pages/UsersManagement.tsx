@@ -12,10 +12,12 @@ import {
 } from '../store/slices/adminSlice';
 import { Search, Filter, ChevronLeft, ChevronRight, Trash2, Ban, CheckCircle, Eye } from 'lucide-react';
 import { toast } from '../lib/toast';
+import { useConfirmDialog } from '../components/Ui/confirm-dialog';
 
 const UsersManagement: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { confirm, dialog: confirmationDialog } = useConfirmDialog();
   const { users, pagination, filters, isLoading } = useAppSelector((state) => state.admin);
   const { user: currentUser } = useAppSelector((state) => state.auth);
 
@@ -49,7 +51,7 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleDeactivate = async (userId: string) => {
-    if (window.confirm('Are you sure you want to deactivate this user?')) {
+    if (await confirm('Are you sure you want to deactivate this user?', { title: 'Deactivate user?', confirmLabel: 'Deactivate user' })) {
       try {
         await dispatch(deactivateUser(userId)).unwrap();
         toast.success('User deactivated', { description: 'They can no longer sign in.' });
@@ -71,7 +73,7 @@ const UsersManagement: React.FC = () => {
   };
 
   const handleDelete = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (await confirm('Are you sure you want to delete this user? This action cannot be undone.', { title: 'Delete user?', confirmLabel: 'Delete user' })) {
       try {
         await dispatch(deleteUser(userId)).unwrap();
         toast.success('User deleted', { description: 'The account has been permanently removed.' });
@@ -84,6 +86,7 @@ const UsersManagement: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {confirmationDialog}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
         <p className="text-gray-600 mt-2">Manage all users in the system</p>

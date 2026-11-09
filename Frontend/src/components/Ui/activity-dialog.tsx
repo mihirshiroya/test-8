@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { CheckinCard } from "./checkin-card"
+import { AppDialog, AppDialogButton } from "./app-dialog"
 import {
   useTaskStore,
   taskSpentSeconds,
@@ -40,8 +41,6 @@ const USE_SYSTEM_OVERLAY = IS_DESKTOP && isTauri()
 export function ActivityDialog() {
   const { timer, tasks, workspaces, confirmActive, holdTask } = useTaskStore()
   const [overlayFailed, setOverlayFailed] = useState(false)
-
-  const primaryRef = useRef<HTMLButtonElement>(null)
 
   const open = timer.phase === "running" && timer.isStale && !!timer.taskId
 
@@ -107,30 +106,6 @@ export function ActivityDialog() {
 
   const inAppOpen = open && !showOverlay
 
-  useEffect(() => {
-    if (inAppOpen) {
-      primaryRef.current?.focus()
-    }
-  }, [inAppOpen])
-
-  useEffect(() => {
-    if (!inAppOpen || !task) {
-      return
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        confirmActive(task.id)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [inAppOpen, task, confirmActive])
-
   if (!inAppOpen || !task) {
     return null
   }
@@ -145,25 +120,25 @@ export function ActivityDialog() {
   const dismiss = () => confirmActive(task.id)
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        tabIndex={-1}
-        onClick={dismiss}
-        className="absolute inset-0 bg-background/80 backdrop-blur-[2px]"
-      />
-
+    <AppDialog
+      open
+      title="Still focusing?"
+      description="If you don't respond, this task will be moved to On Hold automatically."
+      onClose={dismiss}
+      footer={<>
+        <AppDialogButton variant="secondary" onClick={() => holdTask(task.id)}>Pause it</AppDialogButton>
+        <AppDialogButton autoFocus onClick={dismiss}>Yes, continue</AppDialogButton>
+      </>}
+    >
       <CheckinCard
-        className="max-w-md"
+        embedded
         workspaceLabel={workspaceLabel}
         taskTitle={task.title}
         spentSeconds={spent}
         secondsLeft={secondsLeft}
-        primaryRef={primaryRef}
         onContinue={dismiss}
         onPause={() => holdTask(task.id)}
       />
-    </div>
+    </AppDialog>
   )
 }

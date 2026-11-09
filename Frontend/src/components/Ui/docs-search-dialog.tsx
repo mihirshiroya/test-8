@@ -49,11 +49,15 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
     aria-labelledby="docs-search-title"
     onCancel={event => { event.preventDefault(); onClose() }}
     onClick={event => { if (event.target === event.currentTarget) onClose() }}
-    className="docs-search-dialog fixed inset-x-0 bottom-auto top-[8dvh] m-0 mx-auto w-[calc(100%-2rem)] max-w-[720px] overflow-hidden rounded-2xl border border-docs-line-strong bg-docs-paper p-0 text-docs-ink shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+    className="docs-search-dialog kumo-dialog fixed inset-x-0 bottom-auto top-[8dvh] m-0 mx-auto max-h-[84dvh] w-[calc(100%-2rem)] max-w-[720px] backdrop:bg-black/40 backdrop:backdrop-blur-[2px]"
   >
+    <header className="kumo-dialog-header">
+      <h2 id="docs-search-title" className="kumo-dialog-title">Search {name} documentation</h2>
+      <button type="button" aria-label="Close search" onClick={onClose} className="kumo-dialog-close"><X className="size-4" /></button>
+    </header>
+    <div className="kumo-dialog-card">
     <div className="flex items-center gap-3 border-b border-docs-line px-5 py-4">
       <Search aria-hidden="true" className="size-5 shrink-0 text-docs-muted" />
-      <h2 id="docs-search-title" className="sr-only">Search {name} documentation</h2>
       <input
         ref={inputRef}
         aria-label={`Search ${name} documentation`}
@@ -80,7 +84,6 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
         placeholder="Search documentation…"
         className="min-w-0 flex-1 bg-transparent py-1 text-sm outline-none placeholder:text-docs-muted"
       />
-      <button type="button" aria-label="Close search" onClick={onClose} className="rounded p-1 text-docs-muted hover:bg-docs-active focus-visible:outline-2 focus-visible:outline-docs-accent"><X className="size-4" /></button>
     </div>
     <div className="flex items-center justify-between gap-3 px-4 py-2 text-[11px] text-docs-muted">
       <span>All topics in {name} · headings, text &amp; code</span>
@@ -113,6 +116,7 @@ export function DocsSearchDialog({ doc, name, onClose, onNavigate }: {
         <p className="mt-2 text-xs leading-relaxed text-docs-muted">{query.trim() ? 'Try a shorter phrase, a related concept, or a code identifier.' : 'Search headings, explanations, and code across this documentation. Related programming terms and small typos are supported.'}</p>
       </div>}
     </div>
-    <div id="docs-search-help" className="flex flex-wrap items-center justify-between gap-3 border-t border-docs-line px-4 py-3 text-[11px] text-docs-muted"><p className="flex items-center gap-2"><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select <kbd>Esc</kbd> Close</p><span>{name} docs</span></div>
+    <footer id="docs-search-help" className="kumo-dialog-footer text-[11px] text-docs-muted"><p className="flex items-center gap-2"><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Select <kbd>Esc</kbd> Close</p><span>{name} docs</span></footer>
+    </div>
   </dialog>
 }

@@ -29,15 +29,13 @@ export function ProjectPage() {
   const name = workspace?.name ?? ""
 
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="flex-1">
-        <BoardView
-          key={workspaceId}
-          title={name}
-          description={name ? `All tasks for ${name}.` : undefined}
-          workspaceId={workspaceId}
-        />
-      </div>
-    </div>
+    <section aria-label="Workspace kanban" className="dashboard-joined dashboard-kanban flex min-h-full flex-col">
+      <BoardView
+        key={workspaceId}
+        title={name}
+        description={name ? `All tasks for ${name}.` : undefined}
+        workspaceId={workspaceId}
+      />
+    </section>
   )
 }

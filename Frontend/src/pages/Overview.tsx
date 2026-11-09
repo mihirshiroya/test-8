@@ -14,6 +14,7 @@ import { WeeklyHeatmap } from "../components/Ui/weekly-heatmap"
 import { DailyHeatmap } from "../components/Ui/daily-heatmap"
 import { TodaysTasks } from "../components/Ui/todays-tasks"
 import { RecentActivity } from "../components/Ui/recent-activity"
+import { PixelDivider } from "../components/Ui/pixel-divider"
 
 import {
   ChartSkeleton,
@@ -98,6 +99,7 @@ export default function Overview() {
             </div>
           </div>
         </header>
+        <PixelDivider />
 
         {status === "failed" && !data && (
           <div
@@ -125,9 +127,11 @@ export default function Overview() {
                 <StatCard key={metric.key} metric={metric} mode={mode} index={index} />
               ))}
         </section>
+        <PixelDivider />
 
         <section className="dashboard-row grid grid-cols-1 items-stretch lg:grid-cols-3">
-          <div className="flex min-h-0 lg:col-span-2">
+          <div className="dashboard-divided-block flex min-h-0 lg:col-span-2">
+            <PixelDivider orientation="vertical" />
             <div className="h-full w-full">
               {loading ? (
                 <ChartSkeleton />
@@ -143,9 +147,11 @@ export default function Overview() {
             </div>
           </div>
         </section>
+        <PixelDivider />
 
         <section className="dashboard-row grid grid-cols-1 lg:grid-cols-3">
-          <div className="lg:col-span-1">
+          <div className="dashboard-divided-block lg:col-span-1">
+            <PixelDivider orientation="vertical" />
             {loading ? <ListSkeleton rows={6} /> : <RecentActivity items={data.activity} />}
           </div>
 

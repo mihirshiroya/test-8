@@ -46,7 +46,7 @@ export function DayView({
   }, [anchor])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-soft bg-card">
+    <div className="calendar-surface flex min-h-0 flex-1 flex-col overflow-hidden border-b border-soft bg-card">
       <div className="flex items-center justify-between gap-3 border-b border-soft bg-muted/40 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
           <span

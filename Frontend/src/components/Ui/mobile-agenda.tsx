@@ -55,10 +55,10 @@ export function MobileAgenda({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border border-soft">
+    <div className="calendar-surface flex min-h-0 flex-1 flex-col overflow-y-auto border-b border-soft">
       {daysWithTasks.map(({ day, tasks }) => (
         <div key={day.toISOString()} className="flex flex-col">
-          <div className="flex items-center gap-2 px-2 py-2 bg-canvas font-inter!">
+          <div className="flex items-center gap-2 border-b border-soft bg-canvas px-4 py-2 font-inter!">
             <span
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums",
@@ -70,7 +70,7 @@ export function MobileAgenda({
             <span className="text-sm font-semibold text-foreground">{format(day, "EEEE")}</span>
            
           </div>
-          <div className="flex flex-col gap-1.5 bg-background">
+          <div className="flex flex-col bg-background">
             {tasks.map((task) => {
               const range = getTaskTimeRange(task)
               const workspace = getWorkspaceVisual(workspaceMap.get(task.workspaceId))
@@ -84,7 +84,7 @@ export function MobileAgenda({
                   type="button"
                   onClick={() => onSelectTask(task)}
                   className={cn(
-                    "flex items-center gap-3  border border-soft bg-background px-3 py-2.5 text-left transition-colors active:bg-muted",
+                    "flex items-center gap-3 border-b border-soft bg-background px-4 py-3 text-left transition-colors active:bg-muted",
                     (isOnHold || isDone) && "opacity-70"
                   )}
                 >

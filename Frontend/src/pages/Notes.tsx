@@ -17,6 +17,7 @@ import {
 } from '../store/slices/notesSlice.ts'
 
 import { FolderCard } from '../components/Ui/folder-card'
+import { PixelDivider } from '../components/Ui/pixel-divider'
 
 import {
   FolderDialog,
@@ -162,7 +163,7 @@ export function Notes() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="flex min-h-full w-full bg-background">
+    <div className="dashboard-joined dashboard-notes flex min-h-full w-full bg-background">
       <section aria-label="Notes workspace" className="flex min-w-0 flex-1 flex-col">
         {/* ----------------------------------------------------------------- */}
         {/* Header                                                            */}
@@ -196,14 +197,15 @@ export function Notes() {
             <span className="hidden sm:inline">Create folder</span>
           </button>
         </header>
+        <PixelDivider />
 
         {/* ----------------------------------------------------------------- */}
         {/* Folder list                                                       */}
         {/* ----------------------------------------------------------------- */}
 
-        <div className="flex-1 overflow-y-auto pb-8 mt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {!mounted ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="dashboard-folder-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
               {Array.from({ length: 5 }).map((_, index) => (
                 <div
                   key={index}
@@ -212,7 +214,7 @@ export function Notes() {
               ))}
             </div>
           ) : filtered.length ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="dashboard-folder-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
               {filtered.map((folder) => (
                 <FolderCard
                   key={folder.id}
@@ -223,7 +225,7 @@ export function Notes() {
               ))}
             </div>
           ) : (
-            <div className="flex min-h-[320px] flex-col items-center justify-center border border-dashed border-soft px-6 py-10 text-center">
+            <div className="flex min-h-[320px] flex-col items-center justify-center border-b border-soft px-6 py-10 text-center">
               <ThemedSvg
                 raw={isSearching ? noResultsRaw : journalRaw}
                 className="mb-4 h-32 w-32 [&>svg]:h-full [&>svg]:w-full"

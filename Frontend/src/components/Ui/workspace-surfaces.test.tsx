@@ -11,6 +11,8 @@ import { DocsEmptyState } from './docs-empty-set'
 import { ActivityHeatmap } from './activity-heatmap'
 import { DailyHeatmap } from './daily-heatmap'
 import { WeeklyHeatmap } from './weekly-heatmap'
+import { MonthGrid } from './month-grid'
+import { PixelDivider } from './pixel-divider'
 
 const { dispatch, overview } = vi.hoisted(() => ({
   dispatch: vi.fn(),
@@ -23,6 +25,10 @@ const { dispatch, overview } = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('../../lib/tasks', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../../lib/tasks')>(),
+  useCalendarTasks: () => [],
+}))
 vi.mock('../../store', () => ({ useAppDispatch: () => dispatch, useAppSelector: () => overview }))
 vi.mock('../../store/slices/analyticsSlice', () => ({ selectOverview: vi.fn(), fetchOverview: () => ({ type: 'test/refresh' }) }))
 
@@ -166,6 +172,33 @@ describe('compact sidebar states and focus calendars', () => {
     expect(screen.getByRole('table')).toBeTruthy()
     expect(screen.getAllByRole('rowheader')).toHaveLength(7)
     expect(screen.getByText('0 active days · 0m focused in the last 12 weeks')).toBeTruthy()
+  })
+})
+
+describe('decorative pixel dividers', () => {
+  it('keeps both orientations out of the accessibility tree and keyboard order', () => {
+    const { container, rerender } = render(<PixelDivider />)
+    const divider = container.firstElementChild!
+    expect(divider.getAttribute('aria-hidden')).toBe('true')
+    expect(divider.getAttribute('data-orientation')).toBe('horizontal')
+    expect(divider.hasAttribute('tabindex')).toBe(false)
+    expect(divider.querySelector('.pixel-divider-spark')).toBeTruthy()
+    rerender(<PixelDivider orientation="vertical" />)
+    expect(divider.getAttribute('data-orientation')).toBe('vertical')
+  })
+})
+
+describe('connected month calendar', () => {
+  it.each([
+    [2021, 1, 4],
+    [2026, 8, 5],
+    [2026, 2, 6],
+  ])('uses the actual week count for %i/%i without blank extra rows', (year, month, weeks) => {
+    const { container } = render(<MonthGrid monthAnchor={new Date(year, month, 1)} onSelectTask={vi.fn()} onMore={vi.fn()} />)
+    const grid = container.querySelector<HTMLElement>('.calendar-month-grid')!
+    expect(grid.children).toHaveLength(weeks * 7)
+    expect(grid.style.gridTemplateRows).toBe(`repeat(${weeks}, minmax(0px, 1fr))`)
+    expect(container.querySelector('.calendar-surface')).toBeTruthy()
   })
 })
 

@@ -5,6 +5,7 @@ import { MAX_MARKDOWN_BYTES, markdownTitle } from '../../lib/note-markdown'
 import { noteEditorExtensions } from '../../lib/note-editor-extensions'
 import { NoteEditorToolbar } from './note-editor-toolbar'
 import { NoteMarkdownPreview } from './note-markdown-preview'
+import { useConfirmDialog } from './confirm-dialog'
 
 type Mode = 'write' | 'source' | 'split' | 'preview'
 const templates: Record<string, string> = {
@@ -15,6 +16,7 @@ const templates: Record<string, string> = {
 }
 
 export function NoteMarkdownEditor({ initialMarkdown = '', editing = false, onSave, onClose, onDirtyChange, onBusyChange }: { initialMarkdown?: string; editing?: boolean; onSave: (markdown: string) => Promise<void>; onClose: () => void; onDirtyChange?: (dirty: boolean) => void; onBusyChange?: (busy: boolean) => void }) {
+  const { confirm, dialog: confirmationDialog } = useConfirmDialog()
   const [markdown, setMarkdown] = useState(initialMarkdown)
   const [mode, setMode] = useState<Mode>('write')
   const [saving, setSaving] = useState(false)
@@ -42,8 +44,8 @@ export function NoteMarkdownEditor({ initialMarkdown = '', editing = false, onSa
     if (next === 'write' && mode !== 'write') editor?.commands.setContent(markdown, { contentType: 'markdown', emitUpdate: false })
     setMode(next)
   }
-  const replace = (next: string) => {
-    if (dirty && !window.confirm('Replace your unsaved draft?')) return false
+  const replace = async (next: string) => {
+    if (dirty && !await confirm('Replace your unsaved draft?', { title: 'Replace unsaved draft?', confirmLabel: 'Replace draft' })) return false
     setMarkdown(next)
     editor?.commands.setContent(next, { contentType: 'markdown', emitUpdate: false })
     setError('')
@@ -68,7 +70,7 @@ export function NoteMarkdownEditor({ initialMarkdown = '', editing = false, onSa
       if (file.size > MAX_MARKDOWN_BYTES) throw new Error('Markdown files must be no larger than 1 MB.')
       const raw = new TextDecoder('utf-8', { fatal: true }).decode(await file.arrayBuffer()).replace(/^\uFEFF/, '')
       if (!raw.trim() || raw.includes('\0')) throw new Error('Choose a non-empty UTF-8 Markdown file.')
-      if (replace(raw)) { setFileName(file.name); setMode('split') }
+      if (await replace(raw)) { setFileName(file.name); setMode('split') }
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to read this file.') }
   }
   const download = () => {
@@ -82,10 +84,11 @@ export function NoteMarkdownEditor({ initialMarkdown = '', editing = false, onSa
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); void save() }
   }
   return <section className="note-editor" aria-label={editing ? 'Edit note content' : 'Create note content'} onKeyDown={keyboardSave} aria-busy={saving}>
-    <header className="note-editor-header"><div className="flex min-w-0 items-center gap-2"><FileText size={16} /><strong>{editing ? 'Edit content' : 'New content'}</strong><span className="note-draft-badge">{saving ? 'Saving…' : dirty ? 'Unsaved draft' : 'Markdown'}</span></div><button type="button" className="note-tool" aria-label="Close editor" disabled={saving} onClick={() => { if (!dirty || window.confirm('Discard your unsaved draft?')) onClose() }}><X size={16} /></button></header>
+    {confirmationDialog}
+    <header className="note-editor-header"><div className="flex min-w-0 items-center gap-2"><FileText size={16} /><strong>{editing ? 'Edit content' : 'New content'}</strong><span className="note-draft-badge">{saving ? 'Saving…' : dirty ? 'Unsaved draft' : 'Markdown'}</span></div><button type="button" className="note-tool" aria-label="Close editor" disabled={saving} onClick={async () => { if (!dirty || await confirm('Discard your unsaved draft?')) onClose() }}><X size={16} /></button></header>
     <div className="note-editor-actions">
       <div className="note-mode-tabs" role="group" aria-label="Editor view">{([{ key: 'write', label: 'Write' }, { key: 'source', label: 'Markdown' }, { key: 'split', label: 'Split' }, { key: 'preview', label: 'Preview' }] as const).map(item => <button key={item.key} type="button" aria-pressed={mode === item.key} disabled={saving} onClick={() => changeMode(item.key)}>{item.label}</button>)}</div>
-      <div className="flex flex-wrap items-center gap-1"><select aria-label="New content template" value="" disabled={saving} className="note-template-select" onChange={event => { if (event.target.value && replace(templates[event.target.value])) { setFileName(''); setMode('write') } }}><option value="">Templates</option><option value="document">Document</option><option value="code">Code example</option><option value="checklist">Checklist</option><option value="guide">Guide + table</option></select><button type="button" className="note-tool" disabled={saving} onClick={() => fileInput.current?.click()} title="Import Markdown file"><Upload size={14} /><span>Import .md</span></button><button type="button" className="note-tool" disabled={!markdown || saving} onClick={download} aria-label="Download Markdown" title="Download Markdown"><Download size={14} /></button><input ref={fileInput} type="file" accept=".md,.markdown,.mdown,text/markdown" aria-label="Import Markdown file" className="sr-only" disabled={saving} onChange={event => { void importFile(event.target.files?.[0]); event.target.value = '' }} /></div>
+      <div className="flex flex-wrap items-center gap-1"><select aria-label="New content template" value="" disabled={saving} className="note-template-select" onChange={async event => { const template = templates[event.target.value]; if (template && await replace(template)) { setFileName(''); setMode('write') } }}><option value="">Templates</option><option value="document">Document</option><option value="code">Code example</option><option value="checklist">Checklist</option><option value="guide">Guide + table</option></select><button type="button" className="note-tool" disabled={saving} onClick={() => fileInput.current?.click()} title="Import Markdown file"><Upload size={14} /><span>Import .md</span></button><button type="button" className="note-tool" disabled={!markdown || saving} onClick={download} aria-label="Download Markdown" title="Download Markdown"><Download size={14} /></button><input ref={fileInput} type="file" accept=".md,.markdown,.mdown,text/markdown" aria-label="Import Markdown file" className="sr-only" disabled={saving} onChange={event => { void importFile(event.target.files?.[0]); event.target.value = '' }} /></div>
     </div>
     {mode === 'write' && editor && <><NoteEditorToolbar editor={editor} disabled={saving} /><EditorContent editor={editor} /></>}
     {mode !== 'write' && <div className={mode === 'split' ? 'note-source-preview' : ''}>

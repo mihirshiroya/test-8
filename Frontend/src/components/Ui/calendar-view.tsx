@@ -3,6 +3,7 @@
 import { addDays, addMonths, addWeeks, format, subDays, subMonths, subWeeks } from "date-fns"
 import { useState } from "react"
 import { CalendarHeader } from "./calendar-header"
+import { PixelDivider } from "./pixel-divider"
 import { MonthGrid } from "./month-grid"
 import { MobileAgenda } from "./mobile-agenda"
 import { WeekView } from "./week-view"
@@ -57,7 +58,7 @@ export function CalendarView() {
       : format(anchor, "EEE, MMM d")
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="dashboard-joined dashboard-calendar flex min-h-0 flex-1 flex-col">
       <CalendarHeader
         anchor={anchor}
         title={title}
@@ -67,6 +68,7 @@ export function CalendarView() {
         onNext={handleNext}
         onToday={() => setAnchor(new Date())}
       />
+      <PixelDivider />
 
       {view === "month" && (
         <>

@@ -13,11 +13,13 @@ import {
 } from '../store/slices/adminSlice';
 import { ArrowLeft, Save, Shield, Ban, CheckCircle, Trash2 } from 'lucide-react';
 import { toast } from '../lib/toast';
+import { useConfirmDialog } from '../components/Ui/confirm-dialog';
 
 const UserDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { confirm, dialog: confirmationDialog } = useConfirmDialog();
   const { currentUser, isLoading } = useAppSelector((state) => state.admin);
   const { user: loggedInUser } = useAppSelector((state) => state.auth);
 
@@ -78,7 +80,7 @@ const UserDetail: React.FC = () => {
   const handleRoleChange = async (newRole: 'USER' | 'ADMIN') => {
     if (!id) return;
     
-    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+    if (await confirm(`Are you sure you want to change this user's role to ${newRole}?`, { title: 'Change user role?', confirmLabel: 'Change role', destructive: false })) {
       try {
         await dispatch(updateUserRole({ userId: id, role: newRole })).unwrap();
         toast.success('Role updated', { description: `This user is now ${newRole === 'ADMIN' ? 'an admin' : 'a standard user'}.` });
@@ -91,7 +93,7 @@ const UserDetail: React.FC = () => {
   const handleDeactivate = async () => {
     if (!id) return;
     
-    if (window.confirm('Are you sure you want to deactivate this user?')) {
+    if (await confirm('Are you sure you want to deactivate this user?', { title: 'Deactivate user?', confirmLabel: 'Deactivate user' })) {
       try {
         await dispatch(deactivateUser(id)).unwrap();
         toast.success('User deactivated', { description: 'They can no longer sign in.' });
@@ -115,7 +117,7 @@ const UserDetail: React.FC = () => {
   const handleDelete = async () => {
     if (!id) return;
     
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (await confirm('Are you sure you want to delete this user? This action cannot be undone.', { title: 'Delete user?', confirmLabel: 'Delete user' })) {
       try {
         await dispatch(deleteUser(id)).unwrap();
         toast.success('User deleted', { description: 'The account has been permanently removed.' });
@@ -138,6 +140,7 @@ const UserDetail: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {confirmationDialog}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button

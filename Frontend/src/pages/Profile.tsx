@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
+import { AppDialog, AppDialogButton, appDialogInputClass } from '../components/Ui/app-dialog'
 import {
   Check,
   ChevronLeft,
@@ -12,7 +13,6 @@ import {
   Pencil,
   TrendingUp,
   Users,
-  X,
   Target,
 } from "lucide-react"
 
@@ -1337,46 +1337,19 @@ export default function ProductivityProfile() {
       {/* ------------------------------- edit modal ------------------------------ */}
 
       {editOpen && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={() =>
-            setEditOpen(false)
-          }
+        <AppDialog
+          open
+          onClose={() => setEditOpen(false)}
+          title="Edit profile"
+          description="Update your personal profile information."
+          footer={<>
+            <AppDialogButton variant="secondary" onClick={() => setEditOpen(false)}>Cancel</AppDialogButton>
+            <AppDialogButton onClick={saveEdit} disabled={!draft.firstName.trim() || !draft.lastName.trim()}>Save changes</AppDialogButton>
+          </>}
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Edit profile"
-            className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#131316] p-6 shadow-xl"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <div className="mb-5 flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  Edit profile
-                </h3>
-
-                <p className="mt-1 text-sm text-[#8b8b96]">
-                  Update your personal profile
-                  information.
-                </p>
-              </div>
-
-              <button
-                aria-label="Close"
-                onClick={() =>
-                  setEditOpen(false)
-                }
-                className="grid size-8 place-items-center rounded-lg text-[#8b8b96] hover:bg-white/[0.06] hover:text-white"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm font-medium text-white/90">
+              <label className="work-field">
                 First name
 
                 <input
@@ -1389,11 +1362,11 @@ export default function ProductivityProfile() {
                         e.target.value,
                     })
                   }
-                  className="h-10 rounded-lg border border-white/[0.08] bg-[#0b0b0e] px-3 text-sm font-normal text-white outline-none ring-[#7c3aed] focus:ring-2"
+                  className={appDialogInputClass}
                 />
               </label>
 
-              <label className="flex flex-col gap-2 text-sm font-medium text-white/90">
+              <label className="work-field">
                 Last name
 
                 <input
@@ -1405,7 +1378,7 @@ export default function ProductivityProfile() {
                         e.target.value,
                     })
                   }
-                  className="h-10 rounded-lg border border-white/[0.08] bg-[#0b0b0e] px-3 text-sm font-normal text-white outline-none ring-[#7c3aed] focus:ring-2"
+                  className={appDialogInputClass}
                 />
               </label>
             </div>
@@ -1416,29 +1389,7 @@ export default function ProductivityProfile() {
               completed tasks and focus sessions.
             </p>
 
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() =>
-                  setEditOpen(false)
-                }
-                className="rounded-lg px-4 py-2 text-sm font-medium text-[#8b8b96] hover:bg-white/[0.06] hover:text-white"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={saveEdit}
-                disabled={
-                  !draft.firstName.trim() ||
-                  !draft.lastName.trim()
-                }
-                className="rounded-lg bg-[#7c3aed] px-4 py-2 text-sm font-medium text-white hover:bg-[#8b5cf6] disabled:opacity-50"
-              >
-                Save changes
-              </button>
-            </div>
-          </div>
-        </div>
+        </AppDialog>
       )}
 
       {/* toast */}

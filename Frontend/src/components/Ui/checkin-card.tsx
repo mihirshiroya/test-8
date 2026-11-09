@@ -17,6 +17,7 @@ interface CheckinCardProps {
   /** Marks the header as the drag handle of a frameless desktop window. */
   draggable?: boolean
   className?: string
+  embedded?: boolean
 }
 
 /** "Still focusing?" prompt body, shared by the in-app dialog and the desktop overlay window. */
@@ -30,6 +31,7 @@ export function CheckinCard({
   primaryRef,
   draggable = false,
   className = "",
+  embedded = false,
 }: CheckinCardProps) {
   const windowSeconds = RESPONSE_WINDOW_MS / 1000
   const progress = Math.min(100, (secondsLeft / windowSeconds) * 100)
@@ -37,37 +39,39 @@ export function CheckinCard({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="checkin-title"
-      aria-describedby="checkin-desc"
-      className={`relative w-full border border-soft bg-canvas p-6 shadow-2xl ${className}`}
+      role={embedded ? undefined : 'dialog'}
+      aria-modal={embedded ? undefined : true}
+      aria-labelledby={embedded ? undefined : 'checkin-title'}
+      aria-describedby={embedded ? undefined : 'checkin-desc'}
+      className={`${embedded ? 'flex min-h-0 w-full flex-col' : 'kumo-dialog relative max-h-[calc(100dvh-2rem)] w-full'} ${className}`}
     >
-      <div
-        className="mb-5 flex items-start justify-between gap-4"
+      {!embedded && <header
+        className="kumo-dialog-header"
         {...(draggable ? { "data-tauri-drag-region": true } : {})}
       >
         <div className="min-w-0" {...(draggable ? { "data-tauri-drag-region": true } : {})}>
-          <h2 id="checkin-title" className="text-lg font-semibold text-ink font-inter!">
+          <h2 id="checkin-title" className="kumo-dialog-title">
             Still focusing?
           </h2>
 
-          <p id="checkin-desc" className="mt-1 text-sm text-steel">
-            {"If you don't respond, this task will be moved to On Hold automatically."}
-          </p>
         </div>
 
         <button
           type="button"
           onClick={onContinue}
           aria-label="Close and continue"
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-steel hover:bg-gray-tint hover:text-ink"
+          className="kumo-dialog-close"
         >
-          <X className="size-[18px]" />
+          <X className="size-4" />
         </button>
-      </div>
+      </header>}
 
-      <div className="flex h-10 min-w-0 items-center justify-center gap-2 bg-background px-3 text-center">
+      <div className={embedded ? 'flex min-h-0 flex-col' : 'kumo-dialog-card'}>
+      <div className={embedded ? 'flex flex-col gap-4' : 'kumo-dialog-body'}>
+      {!embedded && <p id="checkin-desc" className="kumo-dialog-description">
+        {"If you don't respond, this task will be moved to On Hold automatically."}
+      </p>}
+      <div className="flex h-10 min-w-0 shrink-0 items-center justify-center gap-2 rounded-md border border-soft bg-background px-3 text-center">
         <span className="flex min-w-0 max-w-[40%] items-center gap-1">
           <Folder className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span
@@ -115,19 +119,20 @@ export function CheckinCard({
         </div>
       </div>
 
-      <div className="mt-7 flex justify-end gap-2">
-        <Button size="lg" onClick={onPause} className="bg-background border border-soft font-inter! text-steel">
+      </div>
+      {!embedded && <footer className="kumo-dialog-footer">
+        <Button onClick={onPause} className="kumo-button">
           Pause it
         </Button>
 
         <Button
           ref={primaryRef}
-          size="lg"
           onClick={onContinue}
-          className="bg-primary text-on-primary hover:bg-primary-pressed font-inter!"
+          className="kumo-button kumo-button--primary"
         >
           Yes, continue
         </Button>
+      </footer>}
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { X } from "lucide-react"
+import { AppDialog, AppDialogButton, appDialogInputClass } from './app-dialog'
 import { Input } from './input'
 import { CustomSelect } from "./custom-select"
 import type { SelectOption } from "./custom-select"
@@ -62,11 +62,6 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
   )
 
   useEffect(() => { titleRef.current?.focus() }, [])
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [onClose])
 
   const submit = () => {
     if (!title.trim() || !workspaceId) return
@@ -81,24 +76,23 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
     onClose()
   }
 
-  const fieldClass = "border border-soft bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring"
+  const fieldClass = appDialogInputClass
   const labelClass = "flex flex-col gap-1.5"
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="task-sidebar-title">
-      <button type="button" aria-label="Close" className="absolute inset-0 h-full w-full cursor-default bg-foreground/45" onClick={onClose} />
-
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-soft bg-canvas shadow-2xl">
-        <header className="flex items-center justify-between border-b border-soft px-6 py-4">
-          <h2 id="task-sidebar-title" className="font-inter! text-lg font-semibold text-foreground">
-            {task ? "Edit task" : "Create task"}
-          </h2>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted" aria-label="Close">
-            <X size={18} />
-          </button>
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-6">
+    <AppDialog
+      open
+      title={task ? 'Edit task' : 'Create task'}
+      onClose={onClose}
+      onSubmit={event => { event.preventDefault(); submit() }}
+      size="lg"
+      footer={<>
+        <AppDialogButton variant="secondary" onClick={onClose}>Cancel</AppDialogButton>
+        <AppDialogButton type="submit" disabled={!title.trim() || !workspaceId}>
+          {task ? 'Save changes' : 'Create task'}
+        </AppDialogButton>
+      </>}
+    >
           <div className="flex flex-col gap-5">
 
             {/* Title */}
@@ -147,19 +141,7 @@ export function TaskModal({ task, createInStatus, createInWorkspaceId, onClose }
               />
             </div>
           </div>
-        </div>
-
-        <footer className="flex gap-3 border-t border-soft p-6">
-          <button type="button" onClick={onClose} className="flex-1 font-inter! border border-soft px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
-            Cancel
-          </button>
-          <button type="button" onClick={submit} disabled={!title.trim() || !workspaceId}
-            className="flex-1 bg-primary px-4 py-2.5 text-sm font-inter! font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40">
-            {task ? "Save changes" : "Create task"}
-          </button>
-        </footer>
-      </aside>
-    </div>
+    </AppDialog>
   )
 }
 

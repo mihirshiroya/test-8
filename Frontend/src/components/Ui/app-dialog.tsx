@@ -10,6 +10,9 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utills'
 
+const dialogStack: HTMLElement[] = []
+let savedBodyOverflow = ''
+
 const SIZES = {
   sm: 'max-w-sm',
   md: 'max-w-md',
@@ -52,25 +55,49 @@ export function AppDialog({
   useEffect(() => {
     if (!open) return
 
+    const panel = panelRef.current
+    if (!panel) return
     const previouslyFocused = document.activeElement as HTMLElement | null
-    const previousOverflow = document.body.style.overflow
+    if (!dialogStack.length) savedBodyOverflow = document.body.style.overflow
+    dialogStack.push(panel)
     document.body.style.overflow = 'hidden'
 
-    if (!panelRef.current?.contains(document.activeElement)) {
-      panelRef.current?.focus()
-    }
+    if (!panel.contains(document.activeElement)) panel.focus()
 
     return () => {
-      document.body.style.overflow = previousOverflow
-      previouslyFocused?.focus?.()
+      const index = dialogStack.indexOf(panel)
+      const wasTopmost = index === dialogStack.length - 1
+      if (index !== -1) dialogStack.splice(index, 1)
+      if (!dialogStack.length) document.body.style.overflow = savedBodyOverflow
+      if (wasTopmost && previouslyFocused?.isConnected) previouslyFocused.focus()
     }
   }, [open])
 
   useEffect(() => {
-    if (!open || !dismissible) return
+    if (!open) return
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      const panel = panelRef.current
+      if (!panel || dialogStack.at(-1) !== panel || event.defaultPrevented || document.querySelector('dialog[open]')) return
+      if (event.key === 'Escape' && !event.isComposing && event.keyCode !== 229) {
+        event.preventDefault()
+        if (dismissible) onClose()
+      }
+      if (event.key !== 'Tab') return
+      const scopes = [panel, ...document.querySelectorAll<HTMLElement>('body > [data-placement]')]
+      const focusable = scopes.flatMap(scope => [...scope.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]')])
+        .filter(element => !element.matches(':disabled, [tabindex="-1"]') && !element.closest('[hidden], [inert]') && getComputedStyle(element).display !== 'none' && getComputedStyle(element).visibility !== 'hidden')
+      const first = focusable[0]
+      const last = focusable.at(-1)
+      const active = document.activeElement
+      const inPopover = active instanceof HTMLElement && !!active.closest('body > [data-placement]')
+      if (!first || (event.shiftKey && (active === first || active === panel)) || (!panel.contains(active) && !inPopover)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last ?? panel : first ?? panel).focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
 
     window.addEventListener('keydown', onKey)
@@ -80,15 +107,15 @@ export function AppDialog({
   if (!open) return null
 
   const panelClass = cn(
-    'relative flex max-h-[calc(100dvh-2rem)] w-full flex-col overflow-hidden rounded-xs border border-soft bg-surface shadow-2xl outline-none',
+    'kumo-dialog relative max-h-[calc(100dvh-2rem)] w-full outline-none',
     SIZES[size],
     className,
   )
 
   const content = (
     <>
-      <header className="flex items-center justify-between gap-4 border-b border-soft px-5 py-4">
-        <h2 id={titleId} className="text-lg font-semibold text-ink font-inter! text-balance">
+      <header className="kumo-dialog-header">
+        <h2 id={titleId} className="kumo-dialog-title">
           {title}
         </h2>
 
@@ -97,32 +124,31 @@ export function AppDialog({
           onClick={onClose}
           disabled={!dismissible}
           aria-label="Close"
-          className="-mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-steel transition-colors hover:bg-gray-tint hover:text-ink disabled:opacity-40"
+          className="kumo-dialog-close"
         >
-          <X className="size-[18px]" />
+          <X className="size-4" />
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5">
-        {description && (
-          <p id={descId} className="text-sm leading-relaxed text-steel text-pretty">
-            {description}
-          </p>
-        )}
-        {children}
-      </div>
+      <div className="kumo-dialog-card">
+        <div className="kumo-dialog-body">
+          {description && (
+            <p id={descId} className="kumo-dialog-description">
+              {description}
+            </p>
+          )}
+          {children}
+        </div>
 
-      {footer && (
-        <footer className="flex items-center justify-end gap-2 border-t border-soft px-5 py-4">
-          {footer}
-        </footer>
-      )}
+        {footer && <footer className="kumo-dialog-footer">{footer}</footer>}
+      </div>
     </>
   )
 
   const a11y = {
     role,
     'aria-modal': true,
+    'aria-busy': !dismissible || undefined,
     'aria-labelledby': titleId,
     'aria-describedby': description ? descId : undefined,
     tabIndex: -1,
@@ -185,13 +211,13 @@ export function AppDialogSection({
   const TitleTag = htmlFor ? 'label' : 'p'
 
   return (
-    <section className={cn('rounded-sm border border-soft bg-canvas p-4', className)}>
+    <section className={cn('kumo-dialog-section', className)}>
       {(icon || title || description) && (
         <div className="flex items-start gap-3">
           {icon && (
             <span
               aria-hidden="true"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-soft bg-surface text-charcoal [&_svg]:size-[18px]"
+              className="kumo-dialog-section-icon"
             >
               {icon}
             </span>
@@ -200,7 +226,7 @@ export function AppDialogSection({
             {title && (
               <TitleTag
                 htmlFor={htmlFor}
-                className="block text-sm font-semibold text-ink font-inter!"
+                className="block text-[13px] font-medium text-ink"
               >
                 {title}
               </TitleTag>
@@ -220,11 +246,9 @@ export function AppDialogSection({
 }
 
 const BUTTON_VARIANTS = {
-  primary:
-    'bg-primary text-on-primary shadow-sm hover:bg-primary-pressed',
-  secondary:
-    'border border-soft bg-canvas text-charcoal hover:bg-gray-tint',
-  destructive: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700',
+  primary: 'kumo-button kumo-button--primary',
+  secondary: 'kumo-button',
+  destructive: 'kumo-button kumo-button--danger',
 } as const
 
 export function AppDialogButton({
@@ -239,7 +263,7 @@ export function AppDialogButton({
     <button
       type={type}
       className={cn(
-        'inline-flex h-10 items-center justify-center gap-2 rounded-sm px-4 text-sm font-medium font-inter! transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        'disabled:pointer-events-none',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -248,5 +272,4 @@ export function AppDialogButton({
   )
 }
 
-export const appDialogInputClass =
-  'h-11 w-full rounded-xs border border-soft bg-surface-soft px-3.5 text-sm text-ink outline-none transition-colors placeholder:text-stone focus:border-primary'
+export const appDialogInputClass = 'kumo-input w-full'

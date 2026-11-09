@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { Pause, Timer as TimerIcon, CheckCircle2, X } from "lucide-react"
+import { Pause, Timer as TimerIcon, CheckCircle2 } from "lucide-react"
+import { AppDialog } from './app-dialog'
 
 import {
   useActiveTask,
@@ -179,69 +180,9 @@ export function TimerWidget() {
 /* ========================================================================== */
 
 function TimerPanelModal({ onClose }: { onClose: () => void }) {
-  /*
-   * Close with Escape.
-   */
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose()
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown)
-
-    /*
-     * Prevent background page scrolling
-     * while the modal is open.
-     */
-    const previousOverflow = document.body.style.overflow
-
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-
-      document.body.style.overflow = previousOverflow
-    }
-  }, [onClose])
-
   return (
-    <div
-      className="fixed inset-0 z-[100] flex min-h-screen items-center justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Focus Timer"
-      onMouseDown={(event) => {
-        /*
-         * Only close when clicking the backdrop itself.
-         */
-        if (event.target === event.currentTarget) {
-          onClose()
-        }
-      }}
-    >
-      {/* Modal */}
-      <div
-        className="relative my-auto w-full max-w-xl"
-        onMouseDown={(event) => {
-          event.stopPropagation()
-        }}
-      >
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-20 grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Close focus timer"
-          title="Close"
-        >
-          <X size={17} aria-hidden="true" />
-        </button>
-
-        {/* Existing TimerPanel */}
-        <TimerPanel />
-      </div>
-    </div>
+    <AppDialog open title="Focus Timer" onClose={onClose} size="lg">
+      <TimerPanel />
+    </AppDialog>
   )
 }

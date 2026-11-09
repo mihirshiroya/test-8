@@ -28,7 +28,7 @@ export function WeekView({
   }, [anchor])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-soft bg-card">
+    <div className="calendar-surface flex min-h-0 flex-1 flex-col overflow-hidden border-b border-soft bg-card">
       {/* Single scroll container so the header row and time grid always
           move together horizontally; the header stays pinned via sticky. */}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">

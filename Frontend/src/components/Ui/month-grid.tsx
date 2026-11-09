@@ -31,7 +31,7 @@ export function MonthGrid({
   }, [monthAnchor])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-soft bg-card">
+    <div className="calendar-surface flex min-h-0 flex-1 flex-col overflow-hidden border-b border-soft bg-card">
       <div className="grid grid-cols-7 border-b border-soft bg-canvas">
         {WEEKDAY_LABELS.map((label) => (
           <div
@@ -43,7 +43,10 @@ export function MonthGrid({
           </div>
         ))}
       </div>
-      <div className="grid flex-1 grid-cols-7 grid-rows-6 overflow-y-auto">
+      <div
+        className="calendar-month-grid grid flex-1 grid-cols-7 overflow-y-auto"
+        style={{ gridTemplateRows: `repeat(${days.length / 7}, minmax(0, 1fr))` }}
+      >
         {days.map((day) => (
           <DayCell
             key={day.toISOString()}

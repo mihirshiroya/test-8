@@ -2711,7 +2711,7 @@ html:has([data-workspace-ui]) :is([data-slot='dropdown-menu-item'], [data-slot='
 html:has([data-workspace-ui]) [data-slot='dropdown-menu-separator'] { margin: 4px -4px; background: var(--color-border-soft); }
 html:has([data-workspace-ui]) [data-slot='dropdown-menu-label'] { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--color-steel); }
 html:has([data-workspace-ui]) [role='option'] { border-radius: var(--radius-xs); font-size: 13px; }
-html:has([data-workspace-ui]) :is(.work-dialog, [data-slot='dialog-content'], [data-slot='sheet-content'], [role='dialog']:not([data-placement])) {
+html:has([data-workspace-ui]) :is([data-slot='dialog-content'], [data-slot='sheet-content']) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background: var(--color-canvas);
@@ -2720,10 +2720,76 @@ html:has([data-workspace-ui]) :is(.work-dialog, [data-slot='dialog-content'], [d
   box-shadow: var(--shadow-modal);
 }
 html:has([data-workspace-ui]) [data-slot='sheet-content'] { border-radius: 0; }
-html:has([data-workspace-ui]) :is(.work-dialog, [role='dialog']) :is(h2, [data-slot='dialog-title']) { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 html:has([data-workspace-ui]) :is(.work-dialog::backdrop, [data-slot='dialog-overlay'], [data-slot='sheet-overlay']) { background: color-mix(in srgb, var(--color-ink-deep) 40%, transparent); backdrop-filter: blur(2px); }
-html:has([data-workspace-ui]) .work-dialog > header { padding: 16px 20px; background: var(--color-surface-soft); }
-html:has([data-workspace-ui]) .work-dialog > div { padding: 20px; }
+
+/* Layered dialog: tinted shell holds the title, a bordered inner card holds body + footer. */
+.kumo-dialog {
+  --dialog-shell: #f4f5f7;
+  --dialog-card: #ffffff;
+  --btn-sheen: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  --btn-sheen-hover: linear-gradient(180deg, #ffffff 0%, #eef0f3 100%);
+  --btn-highlight: inset 0 1px 0 #ffffffe6;
+  --btn-primary-sheen: linear-gradient(180deg, #ffffff1f 0%, #ffffff00 55%);
+  --btn-primary-sheen-hover: linear-gradient(180deg, #ffffff47 0%, #ffffff0a 60%);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--dialog-shell);
+  color: var(--color-text-primary);
+  font-family: var(--font-notion);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+.dark .kumo-dialog {
+  --dialog-shell: #111214;
+  --dialog-card: #18191c;
+  --btn-sheen: linear-gradient(180deg, #ffffff0a 0%, #ffffff03 100%);
+  --btn-sheen-hover: linear-gradient(180deg, #ffffff1f 0%, #ffffff05 70%);
+  --btn-highlight: inset 0 1px 0 #ffffff14;
+}
+.kumo-dialog-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px 12px 22px; }
+.kumo-dialog-title { margin: 0; font-size: 16px; font-weight: 550; line-height: 1.35; letter-spacing: -0.01em; color: var(--color-text-primary); text-wrap: balance; }
+.kumo-dialog-close { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: var(--radius-md); color: var(--color-steel); transition: background-color 120ms ease, color 120ms ease; }
+.kumo-dialog-close:hover:not(:disabled) { background: color-mix(in srgb, var(--color-text-primary) 7%, transparent); color: var(--color-text-primary); }
+.kumo-dialog-close:disabled { opacity: .4; }
+.kumo-dialog-card { display: flex; min-height: 0; flex: 1; flex-direction: column; margin: 0 -1px -1px; border: 1px solid var(--color-border); border-radius: 12px 12px 14px 14px; background: var(--dialog-card); box-shadow: 0 -1px 2px #1d1f2405; }
+.kumo-dialog-body { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 16px; overflow-y: auto; overscroll-behavior: contain; padding: 20px 22px; }
+.kumo-dialog-description { margin: 0; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); text-wrap: pretty; }
+.kumo-dialog-footer { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 22px; border-top: 1px solid var(--color-border-soft); }
+.kumo-dialog-footer > :only-child { margin-left: auto; }
+.kumo-dialog-section { padding: 14px; border: 1px solid var(--color-border-soft); border-radius: var(--radius-lg); background: var(--color-surface-soft); }
+.kumo-dialog-section-icon { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--dialog-card); color: var(--color-charcoal); }
+.kumo-dialog-section-icon svg { width: 16px; height: 16px; }
+.kumo-dialog .text-field-label, .kumo-dialog label { font-family: var(--font-notion); }
+.work-dialog.kumo-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); margin: auto; }
+dialog.kumo-dialog:not([open]) { display: none; }
+html .kumo-dialog :is(.kumo-button, .work-button) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background-color: var(--dialog-card); background-image: var(--btn-sheen); color: var(--color-text-primary); box-shadow: var(--btn-highlight), var(--shadow-control); font: 500 13px/1 var(--font-notion); transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
+html .kumo-dialog :is(.kumo-button, .work-button):hover:not(:disabled) { background-image: var(--btn-sheen-hover); border-color: var(--color-border-strong); }
+html .kumo-dialog :is(.kumo-button--primary, .work-button--primary) { border-color: var(--color-primary-pressed); background-color: var(--color-primary); background-image: var(--btn-primary-sheen); color: var(--color-on-primary); font-weight: 600; box-shadow: inset 0 1px 0 #ffffff4d, var(--shadow-control); }
+html .kumo-dialog :is(.kumo-button--primary, .work-button--primary):hover:not(:disabled) { background-color: var(--color-primary); background-image: var(--btn-primary-sheen-hover); border-color: var(--color-primary-deep); }
+html .kumo-dialog .kumo-button--danger { border-color: #b3202a; background-color: #d4343c; background-image: var(--btn-primary-sheen); color: #ffffff; font-weight: 600; box-shadow: inset 0 1px 0 #ffffff40, var(--shadow-control); }
+html .kumo-dialog .kumo-button--danger:hover:not(:disabled) { background-color: #d4343c; background-image: var(--btn-primary-sheen-hover); border-color: #921820; }
+html .kumo-dialog :is(.kumo-button, .work-button):disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+html .kumo-dialog :is(.kumo-button, .work-button) svg { width: 15px; height: 15px; flex-shrink: 0; color: currentColor; }
+.kumo-dialog .kumo-input { min-height: 34px; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--dialog-card); color: var(--color-text-primary); font: 400 13px/1.5 var(--font-notion); box-shadow: var(--shadow-control); }
+.kumo-dialog .kumo-input::placeholder { color: var(--color-muted); }
+.kumo-dialog :is(button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.kumo-dialog .kumo-input:focus { outline: none; border-color: var(--color-primary); box-shadow: var(--ring-focus); }
+.kumo-dialog .kumo-input[aria-invalid='true'] { border-color: var(--color-error); }
+.kumo-dialog textarea.kumo-input { min-height: 96px; resize: vertical; }
+/* Task date/select popovers are portalled outside the modal's scrollable body. */
+body:has(.kumo-dialog[aria-modal='true']) > [data-placement] { z-index: 210; }
+@media (max-width: 640px) {
+  .kumo-dialog-header { padding: 14px 12px 12px 16px; }
+  .kumo-dialog-body { padding: 16px; }
+  .kumo-dialog-footer { padding: 12px 16px; }
+  .kumo-dialog-close { width: 36px; height: 36px; }
+  html .kumo-dialog :is(.kumo-button, .work-button) { min-height: 40px; }
+  .kumo-dialog .kumo-input { min-height: 40px; font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .kumo-dialog *, .kumo-dialog *::before, .kumo-dialog *::after { animation-duration: 0s !important; transition-duration: 0s !important; scroll-behavior: auto !important; } }
 
 /* ---- Tables ---- */
 html:has([data-workspace-ui]) .workspace-content table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
@@ -2774,7 +2840,7 @@ html:has([data-workspace-ui]) .docs-search-dialog [role='option'] { border-radiu
 .docs-search-dialog mark { padding: 0; background: transparent; color: inherit; text-decoration: underline; text-decoration-color: var(--docs-accent); text-underline-offset: 3px; }
 .docs-search-dialog input:focus-visible { box-shadow: none; }
 
-.notification-dialog { position: fixed; inset: 76px 16px auto auto; margin: 0; width: min(446px, calc(100vw - 32px)); max-width: none; max-height: min(620px, calc(100dvh - 96px)); overflow: hidden; padding: 0; border: 1px solid var(--color-border); border-radius: 12px; color: var(--color-text-primary); background: var(--color-canvas); box-shadow: var(--shadow-modal); font-family: var(--font-notion); }
+.notification-dialog { position: fixed; inset: 76px 16px auto auto; margin: 0; width: min(446px, calc(100vw - 32px)); max-width: none; max-height: min(620px, calc(100dvh - 96px)); }
 .notification-dialog[open] { display: flex; flex-direction: column; }
 .notification-dialog--expanded { width: min(640px, calc(100vw - 32px)); }
 .notification-dialog::backdrop { background: #0005; }
@@ -2832,9 +2898,99 @@ html:has([data-workspace-ui]) .docs-search-dialog [role='option'] { border-radiu
   html:has([data-workspace-ui]) :is(.work-input, .text-field-input, [data-slot='input'], .kumo-input, .kumo-select-trigger) { min-height: 40px; font-size: 16px; }
 }
 
-/* Shared borders connect dashboard panels without changing boards or public pages. */
-.workspace-content:has(> .workspace-overview, > .dashboard-profile) { padding: 0; }
-.workspace-content > :is(.workspace-overview, .dashboard-profile) { max-width: none; padding-bottom: 0; }
+.pixel-divider {
+  --divider-line: color-mix(in oklab, var(--color-text-secondary) 24%, transparent);
+  position: relative;
+  display: block;
+  flex: none;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-block: 1px solid var(--color-border-soft);
+  background-color: var(--color-canvas);
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, var(--divider-line) 4px 5px, transparent 5px 8px);
+  pointer-events: none;
+  user-select: none;
+}
+.pixel-divider-spark {
+  position: absolute;
+  top: 2px;
+  left: 24px;
+  width: 2px;
+  height: 2px;
+  background: var(--color-text-secondary);
+  box-shadow: 8px 0 currentColor, 16px 0 currentColor;
+  color: var(--color-text-secondary);
+  opacity: .24;
+  animation: pixel-divider-drift 9s steps(8, end) infinite;
+}
+.pixel-divider[data-orientation='vertical'] { position: absolute; inset: 0 0 0 auto; width: 8px; height: auto; border-block: 0; border-inline: 1px solid var(--color-border-soft); }
+.pixel-divider[data-orientation='vertical'] > .pixel-divider-spark { top: 24px; left: 2px; box-shadow: 0 8px currentColor, 0 16px currentColor; animation-name: pixel-divider-drift-down; }
+@keyframes pixel-divider-drift { 0%, 100% { transform: translateX(0); opacity: .12; } 50% { transform: translateX(32px); opacity: .4; } }
+@keyframes pixel-divider-drift-down { 0%, 100% { transform: translateY(0); opacity: .12; } 50% { transform: translateY(32px); opacity: .4; } }
+
+/* Dividers remain decorative and never cover card controls or drag targets. */
+.dashboard-kanban .workspace-toolbar, .dashboard-calendar > .workspace-page-heading { border-bottom: 0; }
+.dashboard-kanban .kumo-board-column { position: relative; }
+.dashboard-kanban .kumo-board-column > .pixel-divider { inset: auto 0 0; width: 100%; height: 8px; border-inline: 0; border-block: 1px solid var(--color-border-soft); }
+.dashboard-kanban .kumo-board-column > .pixel-divider > .pixel-divider-spark { top: 2px; left: 24px; box-shadow: 8px 0 currentColor, 16px 0 currentColor; animation-name: pixel-divider-drift; }
+.dashboard-kanban .kumo-board-column:last-child > .pixel-divider { display: none; }
+.dashboard-calendar .calendar-month-grid > :not(:nth-child(7n))::after { content: ''; position: absolute; inset: 0 0 0 auto; width: 3px; background: repeating-linear-gradient(135deg, transparent 0 4px, var(--color-border-soft) 4px 5px, transparent 5px 8px); pointer-events: none; }
+@media (min-width: 640px) {
+  .dashboard-kanban .kumo-board-column:nth-child(odd) { padding-right: 8px; }
+  .dashboard-kanban .kumo-board-column:nth-child(even) > .pixel-divider { display: none; }
+  .dashboard-kanban .kumo-board-column > .pixel-divider { inset: 0 0 0 auto; width: 8px; height: auto; border-block: 0; border-inline: 1px solid var(--color-border-soft); }
+  .dashboard-kanban .kumo-board-column > .pixel-divider > .pixel-divider-spark { top: 24px; left: 2px; box-shadow: 0 8px currentColor, 0 16px currentColor; animation-name: pixel-divider-drift-down; }
+}
+@media (min-width: 1280px) {
+  .dashboard-kanban .kumo-board-column:not(:last-child) { padding-right: 8px; }
+  .dashboard-kanban .kumo-board-column:nth-child(even):not(:last-child) > .pixel-divider { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .pixel-divider-spark { animation: none !important; } }
+
+.dashboard-divided-block { position: relative; padding-bottom: 8px; }
+.dashboard-divided-block > .pixel-divider[data-orientation='vertical'] { inset: auto 0 0; width: 100%; height: 8px; border-inline: 0; border-block: 1px solid var(--color-border-soft); }
+.dashboard-divided-block > .pixel-divider > .pixel-divider-spark { top: 2px; left: 24px; box-shadow: 8px 0 currentColor, 16px 0 currentColor; animation-name: pixel-divider-drift; }
+.dashboard-row > .dashboard-divided-block + * { border-top: 0; border-left: 0; }
+:is(.workspace-overview > div, .dashboard-profile > div, .dashboard-profile-insights, .dashboard-sessions, .dashboard-notes > section) > :has(+ .pixel-divider) { border-bottom-width: 0; }
+@media (min-width: 1024px) {
+  .dashboard-divided-block { padding-bottom: 0; padding-right: 8px; }
+  .dashboard-divided-block > .pixel-divider[data-orientation='vertical'] { inset: 0 0 0 auto; width: 8px; height: auto; border-block: 0; border-inline: 1px solid var(--color-border-soft); }
+  .dashboard-divided-block > .pixel-divider > .pixel-divider-spark { top: 24px; left: 2px; box-shadow: 0 8px currentColor, 0 16px currentColor; animation-name: pixel-divider-drift-down; }
+}
+
+/* Shared borders connect dashboard screens without changing public pages. */
+.workspace-content:has(> .workspace-overview, > .dashboard-profile, > .dashboard-joined) { padding: 0; }
+.workspace-content > :is(.workspace-overview, .dashboard-profile, .dashboard-joined) { max-width: none; padding-bottom: 0; }
+.dashboard-joined { min-height: 100%; min-width: 0; background: var(--color-canvas); }
+.dashboard-joined .workspace-page-heading { margin: 0; padding: 20px; }
+.dashboard-joined .workspace-metric::after { display: none; }
+.dashboard-sessions > .workspace-panel { margin: 0; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
+.dashboard-folder-grid { gap: 0; }
+.dashboard-folder-grid > * { min-width: 0; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
+.dashboard-folder-grid > .workspace-folder:hover { background: var(--color-surface-soft); border-color: var(--color-border-soft); box-shadow: none; }
+.dashboard-kanban > div { min-width: 0; flex: 1; gap: 0; }
+.dashboard-kanban .workspace-toolbar { flex-wrap: wrap; }
+.dashboard-kanban .dashboard-kanban-grid { flex: 1; gap: 0; align-items: stretch; }
+.dashboard-calendar > .workspace-page-heading { flex-shrink: 0; }
+.dashboard-calendar .calendar-surface { border-radius: 0; box-shadow: none; }
+.dashboard-calendar .calendar-month-grid > :nth-child(7n) { border-right-width: 0; }
+.dashboard-calendar .calendar-month-grid > :nth-last-child(-n+7) { border-bottom-width: 0; }
+.dashboard-kanban .kumo-board-column { gap: 0; padding: 0; border-width: 0 0 1px; border-radius: 0; background: var(--color-canvas); }
+.dashboard-kanban .kumo-board-column-header { min-height: 52px; padding: 12px 16px; }
+.dashboard-kanban .kumo-board-column > [data-rfd-droppable-id] { padding: 12px 12px 20px; }
+@media (min-width: 640px) {
+  .dashboard-folder-grid > :nth-child(odd), .dashboard-kanban .kumo-board-column:nth-child(odd) { border-right-width: 1px; }
+}
+@media (min-width: 1280px) {
+  .dashboard-folder-grid > :nth-child(n), .dashboard-kanban .kumo-board-column:nth-child(n) { border-right-width: 1px; }
+  .dashboard-folder-grid > :nth-child(4n), .dashboard-kanban .kumo-board-column:nth-child(4n) { border-right-width: 0; }
+}
+@media (max-width: 767px) {
+  .dashboard-joined .workspace-page-heading { padding: 18px 16px; }
+  .dashboard-kanban .workspace-toolbar > h2 { flex-basis: 100%; }
+  .dashboard-calendar .workspace-page-heading > h1 { width: 100%; }
+}
 .workspace-overview > div { gap: 0; background: var(--color-canvas); }
 .workspace-overview-header { padding: 20px; }
 .workspace-overview .workspace-eyebrow { display: none; }

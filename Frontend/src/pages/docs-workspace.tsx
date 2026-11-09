@@ -42,6 +42,7 @@ import { NoteContentComposer } from '../components/Ui/note-content-composer'
 import { NoteMarkdownPreview } from '../components/Ui/note-markdown-preview'
 import { isMarkdownContent } from '../lib/note-markdown'
 import { toast } from '../lib/toast'
+import { useConfirmDialog } from '../components/Ui/confirm-dialog'
 
 /* Shared Tailwind class strings. Colors come from the docs-* tokens in index.css,
  * which switch values under `.dark`, so no `dark:` variants are needed here. */
@@ -136,6 +137,8 @@ export default function DocsWorkspace() {
 // -----------------------------------------------------------------------------
 
 function DocsWorkspaceContent({ folderId }: { folderId: string }) {
+  const { confirm, dialog: confirmationDialog } = useConfirmDialog()
+  const navigationApproved = useRef(false)
   const dispatch = useAppDispatch()
 
   useEffect(() => {
@@ -313,13 +316,13 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // ---------------------------------------------------------------------------
 
   const closeComposer = () => { setComposer(null); setDraftDirty(false); setDraftBusy(false) }
-  const openComposer = (initial?: Content) => {
-    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft?'))) return
+  const openComposer = async (initial?: Content) => {
+    if (draftBusy || (draftDirty && !await confirm('Discard your unsaved draft?'))) return
     setComposer({ initial: initial ?? subtopic?.content.find(isMarkdownContent), key: createId() })
     setDraftDirty(false)
   }
-  const select = (nextTopic: Topic, nextSubtopic?: Subtopic) => {
-    if (draftBusy || (draftDirty && !window.confirm('Discard your unsaved draft before switching sections?'))) return false
+  const select = async (nextTopic: Topic, nextSubtopic?: Subtopic) => {
+    if (draftBusy || (draftDirty && !await confirm('Discard your unsaved draft before switching sections?'))) return false
     closeComposer()
     const targetSubtopic = nextSubtopic ?? nextTopic.subtopics[0]
 
@@ -371,8 +374,8 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     setPendingSearch(null)
   }, [pendingSearch, subtopic?.id, topic?.id, scrollTo])
 
-  const openSearchResult = (result: SearchResult) => {
-    if (!select(result.topic, result.subtopic)) return
+  const openSearchResult = async (result: SearchResult) => {
+    if (!await select(result.topic, result.subtopic)) return
     setSearchOpen(false)
     setPendingSearch(result)
   }
@@ -408,7 +411,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
     event?.preventDefault()
     const cleanTitle = title.trim()
     if (!modal || !cleanTitle || structureBusy || draftBusy) return
-    if (draftDirty && !window.confirm('Discard your unsaved draft before creating a new section?')) return
+    if (draftDirty && !await confirm('Discard your unsaved draft before creating a new section?')) return
     closeComposer()
     setStructureBusy(true)
     try {
@@ -474,7 +477,7 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
       (deleteModal.type === 'subtopic' && deleteModal.id === subtopicId) ||
       (deleteModal.type === 'content' && deleteModal.id === composer.initial?.id)
     )
-    if (affectsDraft && draftDirty && !window.confirm('Discard your unsaved draft and delete this content?')) return
+    if (affectsDraft && draftDirty && !await confirm('Discard your unsaved draft and delete this content?', { title: 'Discard draft and delete?', confirmLabel: 'Discard and delete' })) return
     if (affectsDraft) closeComposer()
     setStructureBusy(true)
     try {
@@ -491,9 +494,10 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   // Reset document
   // ---------------------------------------------------------------------------
 
-  const resetToDefault = () => {
-    const confirmed = window.confirm(
+  const resetToDefault = async () => {
+    const confirmed = await confirm(
       `Reset ${meta.label} documentation to default content? This cannot be undone.`,
+      { title: 'Reset documentation?', confirmLabel: 'Reset documentation' },
     )
     if (!confirmed) return
 
@@ -625,16 +629,18 @@ function DocsWorkspaceContent({ folderId }: { folderId: string }) {
   return (
     <div
       className="docs-workbench flex h-full min-h-0 w-full flex-col overflow-hidden bg-docs-paper font-inter text-docs-ink selection:bg-docs-active"
-      onClickCapture={event => {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      onClickCapture={async event => {
+        if (navigationApproved.current || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
         const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
-        if (!anchor || anchor.getAttribute('target') === '_blank') return
-        if (draftBusy || (draftDirty && !window.confirm('Leave this page and discard your unsaved draft?'))) {
-          event.preventDefault()
-          event.stopPropagation()
-        }
+        if (!(anchor instanceof HTMLAnchorElement) || anchor.target === '_blank' || (!draftBusy && !draftDirty)) return
+        event.preventDefault()
+        event.stopPropagation()
+        if (draftBusy || !await confirm('Leave this page and discard your unsaved draft?')) return
+        navigationApproved.current = true
+        try { anchor.click() } finally { navigationApproved.current = false }
       }}
     >
+      {confirmationDialog}
       <DocsWorkspaceHeader
         folderId={folderId}
         title={meta.label}

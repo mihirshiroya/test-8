@@ -40,6 +40,7 @@ import {
 } from "../../store/slices/taskSlice.tsx"
 
 import { TaskCard } from "./task-card"
+import { PixelDivider } from "./pixel-divider"
 import { TaskModal } from "./task-modal"
 
 import {
@@ -702,11 +703,12 @@ export function KanbanBoard({
       {/* Kanban Board                                                           */}
       {/* ---------------------------------------------------------------------- */}
 
+      <PixelDivider />
       <DragDropContext
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className="grid min-h-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="dashboard-kanban-grid grid min-h-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {STATUS_ORDER.map(
             (status) => {
               const meta =
@@ -848,6 +850,7 @@ const KanbanColumn = memo(
       <div
         className="kumo-board-column h-[calc(100vh-220px)] min-h-[500px] min-w-0"
       >
+        <PixelDivider orientation="vertical" />
     
 {/* Column header */}
 <div className="kumo-board-column-header shrink-0">
