@@ -1,165 +1,66 @@
-"use client"
+import { useMemo, useState } from 'react'
+import { type HeatCell, formatMinutes, localDayKey } from './analytics-data'
+import { HeatmapLegend, heatmapBackground } from './heatmap-legend'
 
-import { Fragment, useMemo, useState } from "react"
-import { type HeatCell, formatMinutes, localDayKey } from "./analytics-data"
-
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 type Slot = { key: string; date: Date; minutes: number; future: boolean }
-
 function addDays(date: Date, days: number) {
   const next = new Date(date)
   next.setDate(next.getDate() + days)
   return next
 }
-
-function startOfWeek(date: Date) {
-  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  return addDays(d, -((d.getDay() + 6) % 7))
-}
-
-function shortDate(date: Date) {
-  return `${MONTHS[date.getMonth()]} ${date.getDate()}`
-}
-
-function cellBackground(minutes: number, max: number) {
-  if (minutes <= 0) return "var(--color-surface)"
-  const pct = Math.round(20 + (minutes / max) * 80)
-  return `color-mix(in oklab, var(--color-primary) ${pct}%, var(--color-surface))`
-}
+const shortDate = (date: Date) => date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 export function WeeklyHeatmap({ cells, weeks = 12 }: { cells: HeatCell[]; weeks?: number }) {
-  const [active, setActive] = useState<[number, number] | null>(null)
-
-  const { columns, grid, max, totalMinutes, activeDays } = useMemo(() => {
-    const minutesByDate = new Map(cells.map((c) => [c.date, c.minutes]))
+  const [active, setActive] = useState<Slot | null>(null)
+  const { columns, rows, max, totalMinutes, activeDays } = useMemo(() => {
     const today = new Date()
     const todayKey = localDayKey(today)
-    const firstWeek = addDays(startOfWeek(today), -7 * (weeks - 1))
-
-    const columns = Array.from({ length: weeks }, (_, w) => addDays(firstWeek, w * 7))
-    const grid: Slot[][] = DAYS.map((_, d) =>
-      columns.map((weekStart) => {
-        const date = addDays(weekStart, d)
-        const key = localDayKey(date)
-        return {
-          key,
-          date,
-          minutes: minutesByDate.get(key) ?? 0,
-          future: key > todayKey,
-        }
-      }),
-    )
-
-    const flat = grid.flat().filter((s) => !s.future)
-    return {
-      columns,
-      grid,
-      max: Math.max(1, ...flat.map((s) => s.minutes)),
-      totalMinutes: flat.reduce((sum, s) => sum + s.minutes, 0),
-      activeDays: flat.filter((s) => s.minutes > 0).length,
-    }
+    const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    const firstWeek = addDays(monday, -7 * (weeks - 1))
+    const minutesByDate = new Map(cells.map(cell => [cell.date, cell.minutes]))
+    const columns = Array.from({ length: weeks }, (_, i) => addDays(firstWeek, i * 7))
+    const rows: Slot[][] = DAYS.map((_, day) => columns.map(week => {
+      const date = addDays(week, day)
+      const key = localDayKey(date)
+      return { key, date, minutes: Math.max(0, minutesByDate.get(key) ?? 0), future: key > todayKey }
+    }))
+    const past = rows.flat().filter(slot => !slot.future)
+    return { columns, rows, max: Math.max(1, ...past.map(slot => slot.minutes)),
+      totalMinutes: past.reduce((sum, slot) => sum + slot.minutes, 0),
+      activeDays: past.filter(slot => slot.minutes > 0).length }
   }, [cells, weeks])
 
-  const activeSlot = active ? grid[active[0]][active[1]] : null
-
   return (
-    <section
-      className="workspace-panel flex h-full min-h-0 flex-col"
-      aria-labelledby="weekly-heatmap-title"
-    >
-      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 id="weekly-heatmap-title" className="text-heading-5 text-primary">
-            Weekly heatmap
-          </h3>
-          <p
-            className="mt-1 text-body-sm text-steel !font-inter !font-semibold tabular-nums"
-            aria-live="polite"
-          >
-            {activeSlot
-              ? `${DAYS[active![0]]}, ${shortDate(activeSlot.date)} · ${formatMinutes(activeSlot.minutes)}`
-              : `${activeDays} active days · ${formatMinutes(totalMinutes)} in the last ${weeks} weeks`}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-caption text-stone" aria-hidden="true">
-          <span>Less</span>
-          {[0, 0.25, 0.5, 0.75, 1].map((step) => (
-            <span
-              key={step}
-              className="size-3"
-              style={{ background: cellBackground(step * max, max) }}
-            />
-          ))}
-          <span>More</span>
-        </div>
+    <section className="workspace-panel focus-heatmap flex h-full min-h-0 flex-col" aria-labelledby="weekly-heatmap-title">
+      <header>
+        <h3 id="weekly-heatmap-title" className="text-heading-5 text-primary">Weekly heatmap</h3>
+        <p className="heatmap-summary">{activeDays} active days · {formatMinutes(totalMinutes)} focused in the last {weeks} weeks</p>
+      </header>
+      <div className="heatmap-scroll" role="region" aria-label="Scrollable weekly focus calendar" tabIndex={0}>
+        <table className="heatmap-table w-full min-w-[340px] table-fixed" onMouseLeave={() => setActive(null)}>
+          <caption className="sr-only">Focus minutes by weekday over the last {weeks} weeks. Outlined circles indicate future days.</caption>
+          <colgroup><col className="w-8" />{columns.map((_, i) => <col key={i} />)}</colgroup>
+          <thead><tr><th scope="col"><span className="sr-only">Week starting</span></th>{columns.map((date, i) => (
+            <th key={localDayKey(date)} scope="col"><span className="sr-only">{shortDate(date)}</span><span aria-hidden="true">{i % 4 === 0 ? date.toLocaleDateString(undefined, { month: 'short' }) : ''}</span></th>
+          ))}</tr></thead>
+          <tbody>{rows.map((row, day) => <tr key={DAYS[day]}>
+            <th scope="row">{DAYS[day]}</th>
+            {row.map(slot => <td key={slot.key}>
+              {slot.future ? <span className="heatmap-dot heatmap-dot--future" title={`${shortDate(slot.date)}: future day`} /> : (
+                <button type="button" className="heatmap-dot" aria-label={`${DAYS[day]}, ${shortDate(slot.date)}: ${formatMinutes(slot.minutes)} focused`}
+                  title={`${shortDate(slot.date)} · ${formatMinutes(slot.minutes)}`} style={{ background: heatmapBackground(slot.minutes, max) }}
+                  onMouseEnter={() => setActive(slot)} onFocus={() => setActive(slot)} onBlur={() => setActive(null)} />
+              )}
+            </td>)}
+          </tr>)}</tbody>
+        </table>
       </div>
-
-      <div className="no-scrollbar mt-6 flex min-h-0 flex-1 items-center overflow-x-auto">
-        <div
-          role="grid"
-          aria-label="Focus minutes by weekday over recent weeks"
-          className="grid w-full min-w-[480px] gap-[clamp(3px,0.5vw,6px)]"
-          style={{ gridTemplateColumns: `2.5rem repeat(${weeks}, minmax(0, 1fr))` }}
-          onMouseLeave={() => setActive(null)}
-        >
-          {grid.map((row, r) => (
-            <Fragment key={DAYS[r]}>
-              <div
-                role="rowheader"
-                className={`self-center text-micro transition-colors font-inter! ${
-                  active?.[0] === r ? "font-medium text-primary" : "text-stone"
-                }`}
-              >
-                {DAYS[r]}
-              </div>
-              {row.map((slot, c) => {
-                if (slot.future) {
-                  return (
-                    <span
-                      key={slot.key}
-                      role="gridcell"
-                      aria-hidden="true"
-                      className="h-[clamp(18px,2.2vw,28px)] border border-dashed border-soft"
-                    />
-                  )
-                }
-                const isActive = active?.[0] === r && active?.[1] === c
-                return (
-                  <button
-                    key={slot.key}
-                    type="button"
-                    role="gridcell"
-                    aria-label={`${DAYS[r]}, ${shortDate(slot.date)}: ${formatMinutes(slot.minutes)}`}
-                    className={`h-[clamp(18px,2.2vw,28px)] outline-none transition-transform duration-150 ${
-                      isActive ? "scale-110 ring-2 ring-[var(--color-primary)]" : ""
-                    }`}
-                    style={{ background: cellBackground(slot.minutes, max) }}
-                    onMouseEnter={() => setActive([r, c])}
-                    onFocus={() => setActive([r, c])}
-                    onBlur={() => setActive(null)}
-                  />
-                )
-              })}
-            </Fragment>
-          ))}
-
-          <div aria-hidden="true" />
-          {columns.map((weekStart, c) => (
-            <div
-              key={weekStart.toISOString()}
-              role="columnheader"
-              className={`pt-1 text-center text-micro  font-inter! transition-colors ${
-                active?.[1] === c ? "font-medium text-primary" : "text-stone"
-              }`}
-            >
-              {c % 2 === 0 || active?.[1] === c ? shortDate(weekStart) : ""}
-            </div>
-          ))}
-        </div>
-      </div>
+      <footer className="heatmap-footer">
+        <span className="heatmap-axis" aria-live="polite">{active ? `${shortDate(active.date)} · ${formatMinutes(active.minutes)} focused` : 'Mon – Sun, top to bottom'}</span>
+        <HeatmapLegend />
+      </footer>
     </section>
   )
 }

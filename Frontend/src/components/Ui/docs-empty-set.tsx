@@ -43,6 +43,17 @@ export function DocsEmptyState({
   size = 'lg',
   className,
 }: DocsEmptyStateProps) {
+  if (size === 'sm') {
+    return (
+      <Empty size="sm" className={cn('docs-compact-empty', className)}>
+        <EmptyHeader>
+          <EmptyTitle className="font-inter! text-docs-muted">{title}</EmptyTitle>
+        </EmptyHeader>
+        {action && <EmptyContent>{action}</EmptyContent>}
+      </Empty>
+    )
+  }
+
   return (
     <Empty size={size} className={cn('border-0', className)}>
       <EmptyHeader>

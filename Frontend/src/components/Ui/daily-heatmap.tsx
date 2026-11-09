@@ -6,6 +6,8 @@ import {
   localDayKey,
 } from "./analytics-data";
 
+import { HeatmapLegend, heatmapBackground } from './heatmap-legend';
+
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
@@ -15,17 +17,8 @@ const shortDate = (date: Date) =>
     day: "numeric",
   });
 
-// Display hours as 01:00–24:00
 const hourLabel = (hour: number) =>
-  `${String(hour + 1).padStart(2, "0")}:00`;
-
-function cellBackground(minutes: number, max: number) {
-  if (minutes <= 0) return "var(--color-surface)";
-
-  const pct = Math.round(20 + (minutes / max) * 80);
-
-  return `color-mix(in oklab, var(--color-primary) ${pct}%, var(--color-surface))`;
-}
+  `${String(hour).padStart(2, "0")}:00`;
 
 export function DailyHeatmap({
   cells,
@@ -121,7 +114,7 @@ export function DailyHeatmap({
 
   return (
     <section
-      className="workspace-panel flex h-full min-h-0 flex-col"
+      className="workspace-panel focus-heatmap flex h-full min-h-0 flex-col"
       aria-labelledby="daily-heatmap-title"
     >
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
@@ -134,7 +127,7 @@ export function DailyHeatmap({
           </h3>
 
           <p
-            className="mt-1 text-body-sm text-steel !font-inter !font-semibold tabular-nums"
+            className="heatmap-summary"
             aria-live="polite"
           >
             {cells === undefined
@@ -145,24 +138,7 @@ export function DailyHeatmap({
           </p>
         </div>
 
-        <div
-          className="flex items-center gap-1.5 text-caption text-stone"
-          aria-hidden="true"
-        >
-          <span>Less</span>
 
-          {[0, 0.25, 0.5, 0.75, 1].map((step) => (
-            <span
-              key={step}
-              className="size-3"
-              style={{
-                background: cellBackground(step * max, max),
-              }}
-            />
-          ))}
-
-          <span>More</span>
-        </div>
       </div>
 
       {cells === undefined ? (
@@ -172,13 +148,13 @@ export function DailyHeatmap({
         </p>
       ) : (
         <div
-          className="mt-5 flex min-h-0 flex-1 items-center overflow-x-auto focus-visible:outline-2 focus-visible:outline-primary"
+          className="heatmap-scroll"
           role="region"
           aria-label="Scrollable hourly focus heatmap"
           tabIndex={0}
         >
           <table
-            className="w-full min-w-[760px] table-fixed border-separate [border-spacing:4px]"
+            className="heatmap-table w-full min-w-[440px] table-fixed"
             onMouseLeave={() => setActive(null)}
           >
             <caption className="sr-only">
@@ -187,7 +163,7 @@ export function DailyHeatmap({
             </caption>
 
             <colgroup>
-              <col className="w-16" />
+              <col className="w-8" />
 
               {HOURS.map((hour) => (
                 <col key={hour} />
@@ -210,7 +186,7 @@ export function DailyHeatmap({
                         : "text-stone"
                     }`}
                   >
-                    {String(hour + 1).padStart(2, "0")}
+                    {hour % 3 === 0 ? String(hour).padStart(2, "0") : ''}
                   </th>
                 ))}
               </tr>
@@ -234,7 +210,7 @@ export function DailyHeatmap({
                     <td key={slot.key} className="p-0">
                       {slot.future ? (
                         <span
-                          className="block h-[clamp(24px,2.2vw,28px)] border border-dashed border-soft"
+                          className="heatmap-dot heatmap-dot--future"
                           title={`${row.label}, ${shortDate(row.date)}, ${hourLabel(slot.hour)}: future hour`}
                           aria-label={`${row.label}, ${shortDate(row.date)}, ${hourLabel(slot.hour)}: future hour`}
                         />
@@ -243,13 +219,13 @@ export function DailyHeatmap({
                           type="button"
                           aria-label={`${row.label}, ${shortDate(row.date)}, ${hourLabel(slot.hour)}–${hourLabel(slot.hour + 1)}: ${formatMinutes(slot.minutes)}`}
                           title={`${hourLabel(slot.hour)}–${hourLabel(slot.hour + 1)} · ${formatMinutes(slot.minutes)}`}
-                          className={`block h-[clamp(24px,2.2vw,28px)] w-full outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
+                          className={`heatmap-dot ${
                             active === slot.key
                               ? "scale-110 ring-2 ring-[var(--color-primary)]"
                               : ""
                           }`}
                           style={{
-                            background: cellBackground(
+                            background: heatmapBackground(
                               slot.minutes,
                               max,
                             ),
@@ -267,6 +243,10 @@ export function DailyHeatmap({
           </table>
         </div>
       )}
+      <footer className="heatmap-footer">
+        <span className="heatmap-axis">Local time · 00:00–24:00</span>
+        <HeatmapLegend />
+      </footer>
     </section>
   );
 }

@@ -586,7 +586,7 @@ export default function ProductivityProfile() {
   const loading = status === 'loading'
 
   return (
-    <main className="min-h-screen bg-background pb-12">
+    <main className="dashboard-profile min-h-screen bg-background">
       <div className="mx-auto">
         
 
@@ -610,16 +610,12 @@ export default function ProductivityProfile() {
 
         <section
   aria-label="Productivity statistics"
-  className="my-5 grid grid-cols-1 gap-y-5 border border-soft py-[18px] sm:grid-cols-2 lg:grid-cols-4"
+  className="dashboard-profile-metrics grid grid-cols-1 border border-soft sm:grid-cols-2 lg:grid-cols-4"
 >
-  {stats.map((s, i) => (
+  {stats.map((s) => (
     <div
   key={s.label}
-  className={`relative px-5  space-y-4 ${
-    i < stats.length - 1
-      ? "lg:after:absolute  lg:after:right-0 lg:after:-top-[18px] lg:after:-bottom-[18px] lg:after:w-px lg:after:bg-[var(--color-border-soft)]"
-      : ""
-  }`}
+  className="flex flex-col gap-4 px-5 py-5"
 >
       <div className="flex items-center justify-between gap-3 text-primary">
         <span className="text-lg font-semibold">{s.label}</span>
@@ -659,7 +655,7 @@ export default function ProductivityProfile() {
 
         <ProfileProjects projects={data?.projects ?? null} />
 
-        <section aria-label="Activity and focus insights" className="mt-8 flex flex-col gap-5">
+        <section aria-label="Activity and focus insights" className="dashboard-profile-insights flex flex-col">
           <div className="w-full min-w-0 overflow-x-auto">
             {data ? <ActivityHeatmap cells={data.heatmap} /> : <HeatmapSkeleton />}
           </div>

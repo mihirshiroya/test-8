@@ -117,7 +117,7 @@ export default function Overview() {
 
         <section
           aria-label="Key metrics"
-          className="grid grid-cols-1 gap-[clamp(0.75rem,2vw,1rem)] sm:grid-cols-2 lg:grid-cols-4"
+          className="dashboard-metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
         >
           {loading
             ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
@@ -126,7 +126,7 @@ export default function Overview() {
               ))}
         </section>
 
-        <section className="grid grid-cols-1 items-stretch gap-[clamp(0.75rem,2vw,1rem)] lg:grid-cols-3">
+        <section className="dashboard-row grid grid-cols-1 items-stretch lg:grid-cols-3">
           <div className="flex min-h-0 lg:col-span-2">
             <div className="h-full w-full">
               {loading ? (
@@ -144,7 +144,7 @@ export default function Overview() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-[clamp(0.75rem,2vw,1rem)] lg:grid-cols-3">
+        <section className="dashboard-row grid grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-1">
             {loading ? <ListSkeleton rows={6} /> : <RecentActivity items={data.activity} />}
           </div>

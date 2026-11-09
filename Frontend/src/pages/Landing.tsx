@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import DesktopPreview from "../components/landing/DesktopPreview";
+import DesktopPreview from "../components/Landing/DesktopPreview";
 import {
   Brand,
   BottomSection,
@@ -19,8 +19,8 @@ import {
   ForYouSection,
   HowItWorks,
   IntroSection,
-} from "../components/landing/LandingSections";
-import "./landing.css";
+} from "../components/Landing/LandingSections";
+import "./Landing.css";
 
 export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);

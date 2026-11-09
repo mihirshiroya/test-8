@@ -28,8 +28,6 @@ import { cn } from '../lib/utills'
 import { IS_DESKTOP } from '../lib/api-origin'
 import { WindowTrafficLights } from '../desktop/DesktopTitleBar'
 import ThemeSwitcher from './ThemeSwitcher'
-import noResultsRaw from '../assets/31-no-results.svg?raw'
-import { ThemedSvg } from '../lib/svg-theme'
 import {
   ProjectDialog,
   type ProjectDraft,
@@ -563,18 +561,8 @@ function AppSidebar() {
             {/* Workspace list */}
             {filteredProjects.length === 0 ? (
               !collapsed && (
-                <div className="flex flex-col items-center gap-2 rounded-xl px-3 py-5 text-center">
-                  <ThemedSvg
-                    raw={noResultsRaw}
-                    ariaLabel="No workspaces found"
-                    className="h-20 w-20"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <p className="text-xs font-medium text-foreground">No workspaces yet</p>
-                    <p className="text-[11px] leading-4 text-muted-foreground">
-                      Create one to start organizing your work.
-                    </p>
-                  </div>
+                <div className="workspace-compact-empty">
+                  No workspaces yet
                 </div>
               )
             ) : (
